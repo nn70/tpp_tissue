@@ -48,6 +48,8 @@ export default function DashboardClient() {
     const [recordNextContactDate, setRecordNextContactDate] = useState("");
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
+    const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
+
     // 新增種類狀態
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -281,7 +283,7 @@ export default function DashboardClient() {
                 <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
 
                 {/* Sidebar List */}
-                <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col glass-panel border-r border-white/10 z-10 shrink-0 h-full">
+                <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel border-r border-white/10 z-10 shrink-0 h-full`}>
                     <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
                         {canEdit && (
                             <button
@@ -492,12 +494,28 @@ export default function DashboardClient() {
                 </div>
 
                 {/* Map Area */}
-                <div className="flex-1 relative hidden md:block p-4">
+                <div className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block flex-1 relative p-4`}>
                     <Map
                         locations={locations}
                         selectedLocationId={selectedLocId}
                         onSelectMarker={setSelectedLocId}
                     />
+                </div>
+
+                {/* 手機版切換按鈕 */}
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 md:hidden flex p-1.5 rounded-full bg-slate-800/90 backdrop-blur-md shadow-2xl border border-white/10">
+                    <button
+                        onClick={() => setMobileView('map')}
+                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${mobileView === 'map' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        地圖
+                    </button>
+                    <button
+                        onClick={() => setMobileView('list')}
+                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${mobileView === 'list' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        列表
+                    </button>
                 </div>
 
                 {/* 新增地點 Modal */}
