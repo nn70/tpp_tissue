@@ -1,4 +1,5 @@
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, LogIn } from "lucide-react";
+import Link from "next/link";
 
 export default function RestrictedAccess() {
     return (
@@ -15,6 +16,15 @@ export default function RestrictedAccess() {
                 <p className="text-slate-400 text-sm leading-relaxed">
                     為了確保資料安全，您必須登入後才能觀看發放紀錄與造冊系統。
                 </p>
+                <div className="pt-6">
+                    <Link
+                        href="/login"
+                        className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl font-medium shadow-lg shadow-purple-500/20 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <LogIn className="w-5 h-5" />
+                        <span>前往登入</span>
+                    </Link>
+                </div>
             </div>
         </div>
     );
