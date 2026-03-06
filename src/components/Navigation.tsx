@@ -47,7 +47,7 @@ export default function Navigation() {
                                 }`}
                         >
                             <Users className="w-4 h-4" />
-                            <span>人員造冊系統</span>
+                            <span>志工報名系統(可追蹤)</span>
                         </Link>
 
                         {(session?.user as any)?.role === "ADMIN" && (

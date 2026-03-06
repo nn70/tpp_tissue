@@ -11,6 +11,7 @@ type LocationWithRecords = Location & { records: DistributionRecord[] };
 
 export default function DashboardClient() {
     const [locations, setLocations] = useState<LocationWithRecords[]>([]);
+    const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
     const [selectedLocId, setSelectedLocId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState<'updated' | 'lastDate'>('updated');
@@ -47,6 +48,28 @@ export default function DashboardClient() {
     const [recordNextContactDate, setRecordNextContactDate] = useState("");
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
+    // 新增種類狀態
+    const [isAddingCategory, setIsAddingCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/item-categories");
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data);
+                // 若本身無預設值且有種類，自動選第一項
+                if (data.length > 0) {
+                    if (!itemType && !isAddingNew) setItemType(data[0].name);
+                    if (!recordItemType && !addingRecordTo) setRecordItemType(data[0].name);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch categories", error);
+        }
+    };
+
     const fetchLocations = async () => {
         try {
             const res = await fetch("/api/locations");
@@ -62,8 +85,39 @@ export default function DashboardClient() {
     };
 
     useEffect(() => {
+        fetchCategories();
         fetchLocations();
     }, []);
+
+    const handleAddCategory = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!newCategoryName.trim()) return;
+
+        setIsSavingCategory(true);
+        try {
+            const res = await fetch("/api/item-categories", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newCategoryName.trim() })
+            });
+            if (res.ok) {
+                const newCat = await res.json();
+                await fetchCategories();
+                setItemType(newCat.name);
+                setRecordItemType(newCat.name);
+                setIsAddingCategory(false);
+                setNewCategoryName("");
+            } else {
+                alert("新增失敗，可能名稱已存在");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("系統錯誤");
+        } finally {
+            setIsSavingCategory(false);
+        }
+    };
 
     // 開啟 Google Calendar 建立提醒事件
     const openGoogleCalendar = (eventDate: string, locationName: string, address: string) => {
@@ -354,10 +408,30 @@ export default function DashboardClient() {
                                                 </div>
                                                 <div>
                                                     <label className="text-xs text-slate-400 mb-1 block">物資種類</label>
-                                                    <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
-                                                        <option value="面紙">面紙</option>
-                                                        <option value="扇子">扇子</option>
-                                                    </select>
+                                                    {!isAddingCategory ? (
+                                                        <div className="flex space-x-2">
+                                                            <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="flex-1 glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+                                                                {categories.map(cat => (
+                                                                    <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
+                                                                ))}
+                                                            </select>
+                                                            {canEdit && (
+                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(true); }} className="px-2 py-2 glass-input rounded-lg text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                                    <Plus className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex space-x-1">
+                                                            <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="flex-1 glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
+                                                            <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-2 bg-purple-500 hover:bg-purple-400 rounded-lg text-white text-xs font-bold transition-colors">
+                                                                儲存
+                                                            </button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-xs transition-colors">
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <label className="text-xs text-slate-400 mb-1 block">數量</label>
@@ -439,12 +513,30 @@ export default function DashboardClient() {
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-300 mb-1.5 block">物資種類 *</label>
-                                        <div className="relative">
-                                            <select value={itemType} onChange={e => setItemType(e.target.value)} className="w-full glass-input px-4 py-3 rounded-xl appearance-none">
-                                                <option value="面紙" className="text-black">面紙</option>
-                                                <option value="扇子" className="text-black">扇子</option>
-                                            </select>
-                                        </div>
+                                        {!isAddingCategory ? (
+                                            <div className="flex space-x-2 relative">
+                                                <select value={itemType} onChange={e => setItemType(e.target.value)} className="flex-1 glass-input px-4 py-3 rounded-xl appearance-none">
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                                {canEdit && (
+                                                    <button type="button" onClick={() => setIsAddingCategory(true)} className="px-3 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                        <Plus className="w-5 h-5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="flex space-x-2">
+                                                <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="輸入新物資名稱" className="flex-1 glass-input px-4 py-3 rounded-xl" autoFocus />
+                                                <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-4 bg-purple-500 hover:bg-purple-400 rounded-xl text-white font-bold transition-colors">
+                                                    儲存
+                                                </button>
+                                                <button type="button" onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }} className="px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white transition-colors">
+                                                    取消
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-300 mb-1.5 block">本次發放數量 *</label>

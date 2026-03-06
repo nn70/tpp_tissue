@@ -91,3 +91,9 @@ model DistributionRecord {
 
   location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }
+
+model ItemCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
