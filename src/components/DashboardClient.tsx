@@ -242,9 +242,13 @@ export default function DashboardClient() {
                 setIsAddingBillboard(false);
                 resetForm();
                 fetchLocations();
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                alert(`儲存失敗：${errData.error || '未知錯誤'} (${res.status})`);
             }
         } catch (err) {
             console.error(err);
+            alert("網路錯誤，請檢查網路連線後重試");
         }
     };
 
@@ -274,9 +278,13 @@ export default function DashboardClient() {
                 setRecordNextContactDate("");
                 setRecordAddToCalendar(true);
                 fetchLocations();
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                alert(`儲存紀錄失敗：${errData.error || '未知錯誤'} (${res.status})`);
             }
         } catch (err) {
             console.error(err);
+            alert("網路錯誤，請檢查網路連線後重試");
         }
     };
 

@@ -22,7 +22,7 @@ export async function POST(request: Request, props: RouteParams) {
         const body = await request.json();
         const { quantity, date, nextContactDate, itemType } = body;
 
-        if (quantity === undefined || !date || !nextContactDate || !itemType) {
+        if (quantity === undefined || !date || !itemType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
