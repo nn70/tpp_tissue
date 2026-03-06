@@ -25,44 +25,47 @@ export default function Navigation() {
                         </span>
                     </div>
 
-                    <div className="flex space-x-1 sm:space-x-4">
+                    <div className="flex space-x-1 sm:space-x-4 overflow-x-auto hide-scrollbar flex-1 px-2 mx-2">
                         <Link
                             href="/dashboard"
-                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300
+                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
                                 ${isDashboard
                                     ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/50 shadow-lg shadow-purple-500/10'
                                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                                 }`}
                         >
                             <Map className="w-4 h-4" />
-                            <span>物資發放紀錄</span>
+                            <span className="hidden sm:inline">物資發放紀錄</span>
+                            <span className="sm:hidden">發放紀錄</span>
                         </Link>
 
                         <Link
                             href="https://registerforum.vercel.app/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300
+                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
                                 ${isForum
                                     ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/50 shadow-lg shadow-blue-500/10'
                                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                                 }`}
                         >
                             <Users className="w-4 h-4" />
-                            <span>志工報名系統(可追蹤)</span>
+                            <span className="hidden sm:inline">志工報名系統(可追蹤)</span>
+                            <span className="sm:hidden">報名系統</span>
                         </Link>
 
                         {(session?.user as any)?.role === "ADMIN" && (
                             <Link
                                 href="/admin"
-                                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300
+                                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
                                     ${isAdmin
                                         ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/50 shadow-lg shadow-amber-500/10'
                                         : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                                     }`}
                             >
                                 <Shield className="w-4 h-4" />
-                                <span>權限管理</span>
+                                <span className="hidden sm:inline">權限管理</span>
+                                <span className="sm:hidden">管理</span>
                             </Link>
                         )}
                     </div>
