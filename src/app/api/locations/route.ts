@@ -7,8 +7,24 @@ export async function GET() {
 
     try {
         const locations = await prisma.location.findMany({
-            include: {
+            select: {
+                id: true,
+                name: true,
+                address: true,
+                latitude: true,
+                longitude: true,
+                contactName: true,
+                contactPhone: true,
+                nextContactDate: true,
+                type: true,
+                updatedAt: true,
                 records: {
+                    select: {
+                        id: true,
+                        itemType: true,
+                        quantity: true,
+                        date: true
+                    },
                     orderBy: { date: 'desc' }
                 }
             },
@@ -30,10 +46,19 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, address, latitude, longitude, contactName, contactPhone, itemType, initialQuantity, date, nextContactDate } = body;
+        const { type, name, address, latitude, longitude, contactName, contactPhone, itemType, initialQuantity, date, nextContactDate } = body;
 
-        if (!name || !address || !contactName || !contactPhone || !itemType || initialQuantity === undefined || !date || !nextContactDate) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        const locationType = type === "BILLBOARD" ? "BILLBOARD" : "SUPPLY";
+
+        if (locationType === "SUPPLY") {
+            if (!name || !address || !contactName || !contactPhone || !itemType || initialQuantity === undefined || !date || !nextContactDate) {
+                return NextResponse.json({ error: "Missing required fields for supply" }, { status: 400 });
+            }
+        } else {
+            // BILLBOARD
+            if (!name || !address || latitude === undefined || longitude === undefined) {
+                return NextResponse.json({ error: "Missing required fields for billboard" }, { status: 400 });
+            }
         }
 
         const newLocation = await prisma.location.create({
@@ -42,16 +67,17 @@ export async function POST(request: Request) {
                 address,
                 latitude,
                 longitude,
-                contactName,
-                contactPhone,
-                nextContactDate: nextContactDate ? new Date(nextContactDate) : null,
-                records: {
+                contactName: locationType === "SUPPLY" ? contactName : null,
+                contactPhone: locationType === "SUPPLY" ? contactPhone : null,
+                nextContactDate: (locationType === "SUPPLY" && nextContactDate) ? new Date(nextContactDate) : null,
+                type: locationType,
+                records: locationType === "SUPPLY" ? {
                     create: {
                         itemType: itemType || "面紙",
                         quantity: Number(initialQuantity),
                         date: date ? new Date(date) : new Date(),
                     } as any
-                }
+                } : undefined
             },
             include: {
                 records: true

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
 interface AddressInputProps {
@@ -10,10 +10,12 @@ interface AddressInputProps {
         lng: number;
     }) => void;
     placeholder?: string;
+    defaultValue?: string;
 }
 
-export default function AddressInput({ onPlaceSelected, placeholder = "請輸入欲發放的地點或地址" }: AddressInputProps) {
+export default function AddressInput({ onPlaceSelected, placeholder = "請輸入欲發放的地點或地址", defaultValue = "" }: AddressInputProps) {
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+    const [inputValue, setInputValue] = useState(defaultValue);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const { isLoaded } = useJsApiLoader({
@@ -24,6 +26,10 @@ export default function AddressInput({ onPlaceSelected, placeholder = "請輸入
         region: 'TW'
     });
 
+    useEffect(() => {
+        setInputValue(defaultValue);
+    }, [defaultValue]);
+
     const onLoad = (autocmp: google.maps.places.Autocomplete) => {
         setAutocomplete(autocmp);
     };
@@ -32,8 +38,10 @@ export default function AddressInput({ onPlaceSelected, placeholder = "請輸入
         if (autocomplete !== null) {
             const place = autocomplete.getPlace();
             if (place.geometry && place.geometry.location) {
+                const addr = place.formatted_address || place.name || "";
+                setInputValue(addr);
                 onPlaceSelected({
-                    address: place.formatted_address || place.name || "",
+                    address: addr,
                     lat: place.geometry.location.lat(),
                     lng: place.geometry.location.lng(),
                 });
@@ -47,8 +55,10 @@ export default function AddressInput({ onPlaceSelected, placeholder = "請輸入
         <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged} className="w-full">
             <input
                 type="text"
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
                 placeholder={placeholder}
-                className="w-full glass-input px-4 py-3 rounded-xl"
+                className="w-full glass-input px-4 py-3 rounded-xl text-black md:text-white"
                 ref={inputRef}
             />
         </Autocomplete>

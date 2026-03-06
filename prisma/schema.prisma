@@ -21,18 +21,18 @@ enum Role {
 
 // NextAuth.js Models
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -68,7 +68,7 @@ model VerificationToken {
 
 // APP Models
 model Location {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   name            String?
   address         String
   latitude        Float?
@@ -76,10 +76,11 @@ model Location {
   contactName     String?
   contactPhone    String?
   nextContactDate DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  type            String    @default("SUPPLY")
 
-  records      DistributionRecord[]
+  records DistributionRecord[]
 }
 
 model DistributionRecord {
@@ -89,7 +90,7 @@ model DistributionRecord {
   date       DateTime
   quantity   Int
 
-  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }
 
 model ItemCategory {

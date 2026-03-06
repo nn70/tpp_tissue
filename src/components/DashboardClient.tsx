@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
-import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2 } from "lucide-react";
+import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon } from "lucide-react";
+import exifr from 'exifr';
 import { Location, DistributionRecord } from "@prisma/client";
 import { useSession } from "next-auth/react";
 
@@ -39,6 +40,12 @@ export default function DashboardClient() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [nextContactDate, setNextContactDate] = useState(getTwoWeeksLater());
     const [addToCalendar, setAddToCalendar] = useState(true);
+
+    // 新增看板表單狀態
+    const [isAddingBillboard, setIsAddingBillboard] = useState(false);
+    const [billboardStep, setBillboardStep] = useState<'upload' | 'form' | 'manual'>('upload');
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 為既存地點新增紀錄狀態
     const [addingRecordTo, setAddingRecordTo] = useState<string | null>(null);
@@ -160,15 +167,59 @@ export default function DashboardClient() {
         setNewLng(place.lng);
     };
 
-    const submitNewLocation = async (e: React.FormEvent) => {
+    // Google Geocoder 根據坐標反查地址
+    const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+        return new Promise((resolve) => {
+            if (!window.google || !window.google.maps) {
+                resolve("");
+                return;
+            }
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === "OK" && results && results[0]) {
+                    resolve(results[0].formatted_address);
+                } else {
+                    resolve("");
+                }
+            });
+        });
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        try {
+            const gpsData = await exifr.gps(file);
+            if (gpsData && gpsData.latitude && gpsData.longitude) {
+                setNewLat(gpsData.latitude);
+                setNewLng(gpsData.longitude);
+                const address = await reverseGeocode(gpsData.latitude, gpsData.longitude);
+                setNewAddress(address);
+                setBillboardStep('form');
+            } else {
+                setBillboardStep('manual');
+            }
+        } catch (err) {
+            console.error(err);
+            setBillboardStep('manual');
+        } finally {
+            setUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const submitNewLocation = async (e: React.FormEvent, type: "SUPPLY" | "BILLBOARD" = "SUPPLY") => {
         e.preventDefault();
-        if (!newAddress || newLat === null || newLng === null) return alert("請透過自動完成選擇一個有效地址");
+        if (!newAddress || newLat === null || newLng === null) return alert("請透過自動完成選擇一個有效地址或是上傳含有地理資訊的照片");
 
         try {
             const res = await fetch("/api/locations", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    type,
                     name: newName || undefined,
                     address: newAddress,
                     latitude: newLat,
@@ -184,10 +235,11 @@ export default function DashboardClient() {
 
             if (res.ok) {
                 // 如果有勾選「建立 Google Calendar」且有設定下次聯絡日
-                if (addToCalendar && nextContactDate) {
+                if (addToCalendar && nextContactDate && type === "SUPPLY") {
                     openGoogleCalendar(nextContactDate, newName, newAddress);
                 }
                 setIsAddingNew(false);
+                setIsAddingBillboard(false);
                 resetForm();
                 fetchLocations();
             }
@@ -239,6 +291,7 @@ export default function DashboardClient() {
         setQuantity("1");
         setNextContactDate(getTwoWeeksLater());
         setAddToCalendar(true);
+        setBillboardStep('upload');
     };
 
     const handleDeleteLocation = async (e: React.MouseEvent, id: string) => {
@@ -286,13 +339,31 @@ export default function DashboardClient() {
                 <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel border-r border-white/10 z-10 shrink-0 h-full`}>
                     <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
                         {canEdit && (
-                            <button
-                                onClick={() => setIsAddingNew(true)}
-                                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
-                            >
-                                <Plus className="w-5 h-5" />
-                                <span>新增選舉物資發放據點</span>
-                            </button>
+                            <div className="flex flex-col space-y-2">
+                                <button
+                                    onClick={() => { setIsAddingNew(true); setIsAddingBillboard(false); resetForm(); }}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    <span>新增選舉物資發放據點</span>
+                                </button>
+
+                                <button
+                                    onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
+                                    disabled={uploadingImage}
+                                    className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-teal-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+                                >
+                                    {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                                    <span>新增看板位置 (自動讀取照片座標)</span>
+                                </button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                />
+                            </div>
                         )}
                         <div className="flex items-center space-x-2">
                             <ArrowUpDown className="w-4 h-4 text-slate-400" />
@@ -609,6 +680,64 @@ export default function DashboardClient() {
                                     <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition shadow-lg shadow-purple-500/20">建立據點並儲存</button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* 新增看板 Modal */}
+                {isAddingBillboard && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="glass-panel w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold flex items-center text-teal-400"><MapIcon className="mr-2" /> 新增看板位置</h2>
+                                <button onClick={() => { setIsAddingBillboard(false); setBillboardStep('upload'); }} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
+                            </div>
+
+                            {billboardStep === 'manual' && (
+                                <div className="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-200">
+                                    <div className="flex mb-2">
+                                        <div className="text-xl mr-2">⚠️</div>
+                                        <div className="font-bold">照片中沒有 GPS 座標資訊</div>
+                                    </div>
+                                    <div className="text-sm space-y-2 opacity-90 pl-7">
+                                        <p>為了能自動在地圖標記，請確認相機設定：</p>
+                                        <ul className="list-disc pl-4 space-y-1 text-xs">
+                                            <li><strong>iPhone:</strong> 設定 → 隱私權與安全性 → 定位服務 → 相機 → 選擇「使用 App 期間」並開啟「準確位置」</li>
+                                            <li><strong>Android:</strong> 打開相機 App → 設定 (齒輪圖示) → 開啟「儲存地理位置」或「位置標籤」</li>
+                                        </ul>
+                                        <p className="pt-2">您現在可以選擇放棄，或者手動在地圖上搜尋位置輸入：</p>
+                                    </div>
+                                    <div className="mt-4 flex space-x-2 pl-7">
+                                        <button type="button" onClick={() => setBillboardStep('form')} className="px-4 py-2 bg-orange-500/30 hover:bg-orange-500/40 border border-orange-500/50 rounded-lg text-sm font-medium transition-colors">手動輸入地址</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {billboardStep === 'form' && (
+                                <form onSubmit={(e) => submitNewLocation(e, "BILLBOARD")} className="space-y-4">
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">看板名稱 (選填)</label>
+                                        <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：中正路大看板" className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">搜尋並選擇看板地址 / 座標 *</label>
+                                        <AddressInput onPlaceSelected={handlePlaceSelected} placeholder="請輸入地址或座標" defaultValue={newAddress} />
+                                    </div>
+
+                                    {newLat && newLng && (
+                                        <div className="text-xs text-green-400 bg-green-400/10 p-2 rounded-lg border border-green-400/20">
+                                            ✅ 已鎖定座標：{newLat.toFixed(5)}, {newLng.toFixed(5)}
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4 flex space-x-3">
+                                        <button type="button" onClick={() => { setIsAddingBillboard(false); setBillboardStep('upload'); }} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
+                                        <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 transition shadow-lg shadow-teal-500/20">建立看板位置</button>
+                                    </div>
+                                </form>
+                            )}
+
                         </div>
                     </div>
                 )}
