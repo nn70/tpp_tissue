@@ -56,6 +56,7 @@ export default function DashboardClient() {
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
+    const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD'>('ALL'); // 新增清單過濾狀態
 
     // 新增種類狀態
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -386,6 +387,22 @@ export default function DashboardClient() {
                                 className={`text-xs px-2 py-1 rounded-lg transition-colors ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
                             >最近發放</button>
                         </div>
+
+                        {/* 分類篩選按鈕區 */}
+                        <div className="flex bg-black/20 rounded-xl p-1 gap-1">
+                            <button
+                                onClick={() => setFilterType('ALL')}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'ALL' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                            >全部</button>
+                            <button
+                                onClick={() => setFilterType('SUPPLY')}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'SUPPLY' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                            >📦 物資站</button>
+                            <button
+                                onClick={() => setFilterType('BILLBOARD')}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'BILLBOARD' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                            >📍 看板</button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -400,7 +417,11 @@ export default function DashboardClient() {
                                 <p className="text-sm mt-1 opacity-70">點擊上方按鈕建立第一筆資料</p>
                             </div>
                         ) : (
-                            [...locations].sort((a, b) => {
+                            [...locations].filter(loc => {
+                                if (filterType === 'ALL') return true;
+                                const t = (loc as any).type || 'SUPPLY';
+                                return t === filterType;
+                            }).sort((a, b) => {
                                 if (sortBy === 'lastDate') {
                                     const aDate = a.records.length > 0 ? new Date(a.records[0].date).getTime() : 0;
                                     const bDate = b.records.length > 0 ? new Date(b.records[0].date).getTime() : 0;
