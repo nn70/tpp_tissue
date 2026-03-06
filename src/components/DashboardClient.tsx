@@ -205,6 +205,7 @@ export default function DashboardClient() {
             console.error(err);
             setBillboardStep('manual');
         } finally {
+            setIsAddingBillboard(true);  // 新增這行：開啟彈窗
             setUploadingImage(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
