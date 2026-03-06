@@ -455,117 +455,114 @@ export default function DashboardClient() {
                                         </div>
                                     )}
 
-                                    <div className="bg-black/20 rounded-xl p-3 mb-3">
-                                        <div className="flex justify-between items-center text-sm mb-2">
-                                            <span className="text-slate-400 font-medium">歷史發放明細</span>
-                                            <span className="bg-purple-500/20 text-purple-200 text-xs px-2 py-1 rounded-full border border-purple-500/30">
-                                                總計 {loc.records.reduce((acc, r) => acc + r.quantity, 0)} 盒
-                                            </span>
-                                        </div>
-                                        <div className="space-y-2 max-h-32 overflow-y-auto pr-1 text-sm custom-scrollbar">
-                                            {loc.records.map(record => (
-                                                <div key={record.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-1.5 last:border-0 gap-1 sm:gap-0">
-                                                    <span className="text-slate-300 flex items-center whitespace-nowrap">
-                                                        <Calendar className="w-3.5 h-3.5 mr-1.5 opacity-70" />
-                                                        {new Date(record.date).toLocaleDateString()}
-                                                    </span>
-                                                    <span className="text-blue-300 flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
-                                                        +{(record as any).itemType} {record.quantity} <Box className="w-3.5 h-3.5 ml-1.5 opacity-70" />
-                                                        {isAdmin && (
-                                                            <button
-                                                                onClick={(e) => handleDeleteRecord(e, loc.id, record.id)}
-                                                                className="ml-3 p-1 text-slate-500 hover:text-red-400 transition-colors"
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        )}
+                                    {(loc as any).type !== 'BILLBOARD' && (
+                                        <>
+                                            <div className="bg-black/20 rounded-xl p-3 mb-3 mt-3">
+                                                <div className="flex justify-between items-center text-sm mb-2">
+                                                    <span className="text-slate-400 font-medium">歷史發放明細</span>
+                                                    <span className="bg-purple-500/20 text-purple-200 text-xs px-2 py-1 rounded-full border border-purple-500/30">
+                                                        總計 {loc.records.reduce((acc, r) => acc + r.quantity, 0)} 盒
                                                     </span>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {canEdit && (
-                                        <button
-                                            onClick={() => {
-                                                const latestRecord = [...loc.records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-                                                setAddingRecordTo(loc.id);
-                                                setRecordItemType((latestRecord as any)?.itemType || "面紙");
-                                            }}
-                                            className="w-full mt-4 bg-white/5 hover:bg-white/10 text-blue-300 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all border border-white/10"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            <span>登記新發放</span>
-                                        </button>
-                                    )}
-
-                                    {addingRecordTo === loc.id ? (
-                                        <form onSubmit={(e) => submitNewRecord(e, loc.id)} className="space-y-3 pt-2 border-t border-white/10" onClick={(e) => e.stopPropagation()}>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div>
-                                                    <label className="text-xs text-slate-400 mb-1 block">日期</label>
-                                                    <input type="date" value={recordDate} onChange={e => setRecordDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                <div className="space-y-2 max-h-32 overflow-y-auto pr-1 text-sm custom-scrollbar">
+                                                    {loc.records.map(record => (
+                                                        <div key={record.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-1.5 last:border-0 gap-1 sm:gap-0">
+                                                            <span className="text-slate-300 flex items-center whitespace-nowrap">
+                                                                <Calendar className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+                                                                {new Date(record.date).toLocaleDateString()}
+                                                            </span>
+                                                            <span className="text-blue-300 flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
+                                                                +{(record as any).itemType} {record.quantity} <Box className="w-3.5 h-3.5 ml-1.5 opacity-70" />
+                                                                {isAdmin && (
+                                                                    <button
+                                                                        onClick={(e) => handleDeleteRecord(e, loc.id, record.id)}
+                                                                        className="ml-3 p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div>
-                                                    <label className="text-xs text-slate-400 mb-1 block">物資種類</label>
-                                                    {!isAddingCategory ? (
-                                                        <div className="flex space-x-1 items-center">
-                                                            <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
-                                                                {categories.map(cat => (
-                                                                    <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
-                                                                ))}
-                                                            </select>
-                                                            {canEdit && (
-                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(true); }} className="shrink-0 p-1.5 glass-input rounded-md text-slate-400 hover:text-white transition-colors" title="新增種類">
-                                                                    <Plus className="w-4 h-4" />
-                                                                </button>
-                                                            )}
-                                                            {isAdmin && recordItemType !== "面紙" && recordItemType !== "扇子" && (
-                                                                <button type="button" onClick={(e) => { e.stopPropagation(); const cat = categories.find(c => c.name === recordItemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-1.5 glass-input rounded-md text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
+                                            </div>
+
+                                            {addingRecordTo === loc.id ? (
+                                                <form onSubmit={(e) => submitNewRecord(e, loc.id)} className="space-y-3 pt-2 border-t border-white/10" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <div>
+                                                            <label className="text-xs text-slate-400 mb-1 block">日期</label>
+                                                            <input type="date" value={recordDate} onChange={e => setRecordDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-400 mb-1 block">物資種類</label>
+                                                            {!isAddingCategory ? (
+                                                                <div className="flex space-x-1 items-center">
+                                                                    <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+                                                                        {categories.map(cat => (
+                                                                            <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    {canEdit && (
+                                                                        <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(true); }} className="shrink-0 p-1.5 glass-input rounded-md text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                                            <Plus className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
+                                                                    {isAdmin && recordItemType !== "面紙" && recordItemType !== "扇子" && (
+                                                                        <button type="button" onClick={(e) => { e.stopPropagation(); const cat = categories.find(c => c.name === recordItemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-1.5 glass-input rounded-md text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex space-x-1 items-center">
+                                                                    <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="w-[80px] glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
+                                                                    <div className="flex flex-col space-y-1">
+                                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-1 bg-purple-500 hover:bg-purple-400 rounded-md text-white text-[10px] font-bold transition-colors">
+                                                                            儲存
+                                                                        </button>
+                                                                        <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded-md text-white text-[10px] transition-colors">
+                                                                            取消
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
                                                             )}
                                                         </div>
-                                                    ) : (
-                                                        <div className="flex space-x-1 items-center">
-                                                            <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="w-[80px] glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
-                                                            <div className="flex flex-col space-y-1">
-                                                                <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-1 bg-purple-500 hover:bg-purple-400 rounded-md text-white text-[10px] font-bold transition-colors">
-                                                                    儲存
-                                                                </button>
-                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded-md text-white text-[10px] transition-colors">
-                                                                    取消
-                                                                </button>
-                                                            </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-400 mb-1 block">數量</label>
+                                                            <input type="number" min="1" value={recordQuantity} onChange={e => setRecordQuantity(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
                                                         </div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs text-slate-400 mb-1 block">數量</label>
-                                                    <input type="number" min="1" value={recordQuantity} onChange={e => setRecordQuantity(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
-                                                </div>
-                                            </div>
-                                            <div className="mt-2">
-                                                <label className="text-xs text-slate-400 mb-1 block">下次聯絡日 *</label>
-                                                <input type="date" value={recordNextContactDate} onChange={e => setRecordNextContactDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
-                                                <label className="flex items-center space-x-2 mt-1.5 cursor-pointer select-none" onClick={e => e.stopPropagation()}>
-                                                    <input type="checkbox" checked={recordAddToCalendar} onChange={e => setRecordAddToCalendar(e.target.checked)} className="w-3.5 h-3.5 rounded accent-purple-500" />
-                                                    <span className="text-xs text-slate-400">📅 建立 Google Calendar 提醒</span>
-                                                </label>
-                                            </div>
-                                            <div className="flex space-x-2">
-                                                <button type="button" onClick={(e) => { e.stopPropagation(); setAddingRecordTo(null); }} className="flex-1 py-2 rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 text-sm transition-colors">取消</button>
-                                                <button type="submit" onClick={e => e.stopPropagation()} className="flex-1 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-500 text-sm transition-colors">儲存</button>
-                                            </div>
-                                        </form>
-                                    ) : (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setAddingRecordTo(loc.id); }}
-                                            className="w-full py-2 flex items-center justify-center space-x-1 border border-dashed border-white/20 text-slate-300 hover:text-white hover:border-white/40 rounded-xl text-sm transition-all"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            <span>登記新發放</span>
-                                        </button>
+                                                    </div>
+                                                    <div className="mt-2">
+                                                        <label className="text-xs text-slate-400 mb-1 block">下次聯絡日 *</label>
+                                                        <input type="date" value={recordNextContactDate} onChange={e => setRecordNextContactDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                        <label className="flex items-center space-x-2 mt-1.5 cursor-pointer select-none" onClick={e => e.stopPropagation()}>
+                                                            <input type="checkbox" checked={recordAddToCalendar} onChange={e => setRecordAddToCalendar(e.target.checked)} className="w-3.5 h-3.5 rounded accent-purple-500" />
+                                                            <span className="text-xs text-slate-400">📅 建立 Google Calendar 提醒</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button type="button" onClick={(e) => { e.stopPropagation(); setAddingRecordTo(null); }} className="flex-1 py-2 rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 text-sm transition-colors">取消</button>
+                                                        <button type="submit" onClick={e => e.stopPropagation()} className="flex-1 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-500 text-sm transition-colors">儲存</button>
+                                                    </div>
+                                                </form>
+                                            ) : (
+                                                canEdit && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const latestRecord = [...loc.records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                                                            setAddingRecordTo(loc.id);
+                                                            setRecordItemType((latestRecord as any)?.itemType || "面紙");
+                                                        }}
+                                                        className="w-full mt-2 py-2 flex items-center justify-center space-x-1 border border-dashed border-white/20 text-slate-300 hover:text-white hover:border-white/40 rounded-xl text-sm transition-all"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                        <span>登記新發放</span>
+                                                    </button>
+                                                )
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             ))
