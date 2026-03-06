@@ -9,16 +9,19 @@ interface AddressInputProps {
         lat: number;
         lng: number;
     }) => void;
+    placeholder?: string;
 }
 
-export default function AddressInput({ onPlaceSelected }: AddressInputProps) {
+export default function AddressInput({ onPlaceSelected, placeholder = "請輸入欲發放的地點或地址" }: AddressInputProps) {
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: ["places"]
+        libraries: ["places"],
+        language: 'zh-TW',
+        region: 'TW'
     });
 
     const onLoad = (autocmp: google.maps.places.Autocomplete) => {
@@ -44,7 +47,7 @@ export default function AddressInput({ onPlaceSelected }: AddressInputProps) {
         <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged} className="w-full">
             <input
                 type="text"
-                placeholder="請輸入欲發放面紙的地點或地址"
+                placeholder={placeholder}
                 className="w-full glass-input px-4 py-3 rounded-xl"
                 ref={inputRef}
             />

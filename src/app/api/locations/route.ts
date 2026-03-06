@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     try {
         const locations = await prisma.location.findMany({
@@ -27,32 +22,35 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     try {
-        const body = await request.json();
-        const { address, latitude, longitude, contactPhone, initialQuantity, date, nextContactDate } = body;
+        const session = await getServerSession(authOptions);
+        if (!session?.user || (session.user as any)?.role === "USER") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
 
-        if (!address || initialQuantity === undefined) {
+        const body = await request.json();
+        const { name, address, latitude, longitude, contactName, contactPhone, itemType, initialQuantity, date, nextContactDate } = body;
+
+        if (!name || !address || !contactName || !contactPhone || !itemType || initialQuantity === undefined || !date || !nextContactDate) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
         const newLocation = await prisma.location.create({
             data: {
+                name,
                 address,
                 latitude,
                 longitude,
+                contactName,
                 contactPhone,
                 nextContactDate: nextContactDate ? new Date(nextContactDate) : null,
                 records: {
                     create: {
+                        itemType: itemType || "面紙",
                         quantity: Number(initialQuantity),
                         date: date ? new Date(date) : new Date(),
-                    }
+                    } as any
                 }
             },
             include: {

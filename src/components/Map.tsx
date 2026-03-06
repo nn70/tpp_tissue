@@ -29,7 +29,9 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: ["places"]
+        libraries: ["places"],
+        language: 'zh-TW',
+        region: 'TW'
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -80,16 +82,33 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                     >
                         {isSelected && (
                             <InfoWindow onCloseClick={() => onSelectMarker(null)}>
-                                <div className="p-2 min-w-[200px] text-gray-800">
-                                    <h3 className="font-bold text-base mb-1 truncate" title={loc.address}>{loc.address}</h3>
-                                    <div className="text-sm">
-                                        <p className="flex justify-between border-b pb-1 mb-1">
-                                            <span className="text-gray-500">聯絡電話:</span>
+                                <div className="p-3 min-w-[220px] text-gray-800">
+                                    <h3 className="font-bold text-base mb-1 truncate text-gray-900" title={(loc as any).name || loc.address}>
+                                        {(loc as any).name || loc.address}
+                                    </h3>
+                                    {(loc as any).name && (
+                                        <p className="text-xs text-gray-500 mb-2 truncate" title={loc.address}>{loc.address}</p>
+                                    )}
+                                    <div className="text-sm mt-2">
+                                        {(loc as any).contactName && (
+                                            <p className="flex justify-between border-b border-gray-100 pb-1.5 mb-1.5">
+                                                <span className="text-gray-500 flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                                    聯絡人:
+                                                </span>
+                                                <span className="font-medium text-gray-700">{(loc as any).contactName}</span>
+                                            </p>
+                                        )}
+                                        <p className="flex justify-between border-b border-gray-100 pb-1.5 mb-1.5">
+                                            <span className="text-gray-500 flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                                電話:
+                                            </span>
                                             <span className="font-medium text-blue-600">{loc.contactPhone || '無'}</span>
                                         </p>
-                                        <p className="flex justify-between items-center pt-1">
-                                            <span className="text-gray-500">歷史總發放:</span>
-                                            <span className="text-lg font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">{totalQuantity} 盒</span>
+                                        <p className="flex justify-between items-center pt-1.5">
+                                            <span className="text-gray-500">歷史發放:</span>
+                                            <span className="text-base font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full">{totalQuantity} 盒</span>
                                         </p>
                                     </div>
                                 </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 interface RouteParams {
     params: Promise<{
@@ -11,24 +11,25 @@ interface RouteParams {
 
 // 供 Next.js v15 避免 context 非同步錯誤的包裝
 export async function POST(request: Request, props: RouteParams) {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user || (session.user as any)?.role === "USER") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const { id } = await props.params;
         const body = await request.json();
-        const { quantity, date, nextContactDate } = body;
+        const { quantity, date, nextContactDate, itemType } = body;
 
-        if (quantity === undefined) {
-            return NextResponse.json({ error: "Missing quantity" }, { status: 400 });
+        if (quantity === undefined || !date || !nextContactDate || !itemType) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
         const newRecord = await prisma.distributionRecord.create({
             data: {
                 locationId: id,
+                itemType: itemType || "面紙",
                 quantity: Number(quantity),
                 date: date ? new Date(date) : new Date(),
             }

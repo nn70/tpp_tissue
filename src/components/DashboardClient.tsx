@@ -1,35 +1,51 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
 import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
-import { LogOut, Plus, MapPin, Calendar, Box, Loader2, Phone } from "lucide-react";
+import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2 } from "lucide-react";
 import { Location, DistributionRecord } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 type LocationWithRecords = Location & { records: DistributionRecord[] };
 
 export default function DashboardClient() {
-    const { data: session } = useSession();
     const [locations, setLocations] = useState<LocationWithRecords[]>([]);
     const [selectedLocId, setSelectedLocId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [sortBy, setSortBy] = useState<'updated' | 'lastDate'>('updated');
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const canEdit = isAdmin || (session?.user as any)?.role === "EDITOR";
+
+    // 計算兩周後日期的輔助函式
+    const getTwoWeeksLater = () => {
+        const d = new Date();
+        d.setDate(d.getDate() + 14);
+        return d.toISOString().split('T')[0];
+    };
 
     // 新增地點表單狀態
     const [isAddingNew, setIsAddingNew] = useState(false);
+    const [newName, setNewName] = useState("");
     const [newAddress, setNewAddress] = useState("");
     const [newLat, setNewLat] = useState<number | null>(null);
     const [newLng, setNewLng] = useState<number | null>(null);
+    const [contactName, setContactName] = useState("");
     const [contactPhone, setContactPhone] = useState("");
+    const [itemType, setItemType] = useState("面紙");
     const [quantity, setQuantity] = useState("1");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [nextContactDate, setNextContactDate] = useState("");
+    const [nextContactDate, setNextContactDate] = useState(getTwoWeeksLater());
+    const [addToCalendar, setAddToCalendar] = useState(true);
 
     // 為既存地點新增紀錄狀態
     const [addingRecordTo, setAddingRecordTo] = useState<string | null>(null);
+    const [recordItemType, setRecordItemType] = useState("面紙");
     const [recordQuantity, setRecordQuantity] = useState("1");
     const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
     const [recordNextContactDate, setRecordNextContactDate] = useState("");
+    const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
     const fetchLocations = async () => {
         try {
@@ -49,6 +65,21 @@ export default function DashboardClient() {
         fetchLocations();
     }, []);
 
+    // 開啟 Google Calendar 建立提醒事件
+    const openGoogleCalendar = (eventDate: string, locationName: string, address: string) => {
+        const d = new Date(eventDate);
+        const startDate = d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        const endD = new Date(d.getTime() + 60 * 60 * 1000);
+        const endDate = endD.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+        const title = encodeURIComponent(`🧴 聯絡補貨: ${locationName || address}`);
+        const details = encodeURIComponent(`地址: ${address}\n請聯絡該地點確認選舉物資補貨需求`);
+        const loc = encodeURIComponent(address);
+
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${loc}`;
+        window.open(url, '_blank');
+    };
+
     const handlePlaceSelected = (place: { address: string; lat: number; lng: number }) => {
         setNewAddress(place.address);
         setNewLat(place.lat);
@@ -64,10 +95,13 @@ export default function DashboardClient() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    name: newName || undefined,
                     address: newAddress,
                     latitude: newLat,
                     longitude: newLng,
+                    contactName: contactName || undefined,
                     contactPhone,
+                    itemType,
                     initialQuantity: Number(quantity),
                     date,
                     nextContactDate: nextContactDate ? nextContactDate : undefined
@@ -75,6 +109,10 @@ export default function DashboardClient() {
             });
 
             if (res.ok) {
+                // 如果有勾選「建立 Google Calendar」且有設定下次聯絡日
+                if (addToCalendar && nextContactDate) {
+                    openGoogleCalendar(nextContactDate, newName, newAddress);
+                }
                 setIsAddingNew(false);
                 resetForm();
                 fetchLocations();
@@ -91,6 +129,7 @@ export default function DashboardClient() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    itemType: recordItemType,
                     quantity: Number(recordQuantity),
                     date: recordDate,
                     nextContactDate: recordNextContactDate ? recordNextContactDate : undefined
@@ -98,8 +137,16 @@ export default function DashboardClient() {
             });
 
             if (res.ok) {
+                // 如果有勾選且有設定下次聯絡日
+                if (recordAddToCalendar && recordNextContactDate) {
+                    const loc = locations.find(l => l.id === locationId);
+                    openGoogleCalendar(recordNextContactDate, (loc as any)?.name || '', loc?.address || '');
+                }
                 setAddingRecordTo(null);
+                setRecordItemType("面紙");
                 setRecordQuantity("1");
+                setRecordNextContactDate("");
+                setRecordAddToCalendar(true);
                 fetchLocations();
             }
         } catch (err) {
@@ -108,40 +155,53 @@ export default function DashboardClient() {
     };
 
     const resetForm = () => {
+        setNewName("");
         setNewAddress("");
         setNewLat(null);
         setNewLng(null);
+        setContactName("");
         setContactPhone("");
+        setItemType("面紙");
         setQuantity("1");
-        setNextContactDate("");
+        setNextContactDate(getTwoWeeksLater());
+        setAddToCalendar(true);
+    };
+
+    const handleDeleteLocation = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!confirm("確定要刪除這個地點及其所有發放紀錄嗎？此動作無法復原。")) return;
+
+        try {
+            const res = await fetch(`/api/locations/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                if (selectedLocId === id) setSelectedLocId(null);
+                await fetchLocations();
+            } else {
+                alert("刪除失敗");
+            }
+        } catch (error) {
+            alert("系統錯誤");
+        }
+    };
+
+    const handleDeleteRecord = async (e: React.MouseEvent, locationId: string, recordId: string) => {
+        e.stopPropagation();
+        if (!confirm("確定要刪除這筆發放紀錄嗎？此動作無法復原。")) return;
+
+        try {
+            const res = await fetch(`/api/locations/${locationId}/records/${recordId}`, { method: "DELETE" });
+            if (res.ok) {
+                await fetchLocations();
+            } else {
+                alert("刪除失敗");
+            }
+        } catch (error) {
+            alert("系統錯誤");
+        }
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100">
-            {/* Header */}
-            <header className="h-16 glass-panel border-b border-white/10 flex items-center justify-between px-6 z-10 shrink-0">
-                <div className="flex items-center space-x-3">
-                    <div className="bg-purple-500/20 p-2 rounded-lg">
-                        <MapPin className="text-purple-300 w-5 h-5" />
-                    </div>
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
-                        發放熱點追蹤
-                    </h1>
-                </div>
-                <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2 text-sm text-slate-300 hidden md:flex">
-                        {session?.user?.image && <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full border border-white/20" />}
-                        <span>{session?.user?.name}</span>
-                    </div>
-                    <button
-                        onClick={() => signOut({ callbackUrl: "/" })}
-                        className="flex items-center space-x-2 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        <span className="hidden md:inline">登出</span>
-                    </button>
-                </div>
-            </header>
+        <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100 pt-16">
 
             {/* Main Content */}
             <div className="flex flex-1 overflow-hidden relative">
@@ -150,14 +210,28 @@ export default function DashboardClient() {
 
                 {/* Sidebar List */}
                 <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col glass-panel border-r border-white/10 z-10 shrink-0 h-full">
-                    <div className="p-4 border-b border-white/10 shrink-0">
-                        <button
-                            onClick={() => setIsAddingNew(true)}
-                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>新增面紙盒發放據點</span>
-                        </button>
+                    <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
+                        {canEdit && (
+                            <button
+                                onClick={() => setIsAddingNew(true)}
+                                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>新增選舉物資發放據點</span>
+                            </button>
+                        )}
+                        <div className="flex items-center space-x-2">
+                            <ArrowUpDown className="w-4 h-4 text-slate-400" />
+                            <span className="text-xs text-slate-400">排序：</span>
+                            <button
+                                onClick={() => setSortBy('updated')}
+                                className={`text-xs px-2 py-1 rounded-lg transition-colors ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                            >最近更新</button>
+                            <button
+                                onClick={() => setSortBy('lastDate')}
+                                className={`text-xs px-2 py-1 rounded-lg transition-colors ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                            >最近發放</button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -172,20 +246,50 @@ export default function DashboardClient() {
                                 <p className="text-sm mt-1 opacity-70">點擊上方按鈕建立第一筆資料</p>
                             </div>
                         ) : (
-                            locations.map((loc) => (
+                            [...locations].sort((a, b) => {
+                                if (sortBy === 'lastDate') {
+                                    const aDate = a.records.length > 0 ? new Date(a.records[0].date).getTime() : 0;
+                                    const bDate = b.records.length > 0 ? new Date(b.records[0].date).getTime() : 0;
+                                    return bDate - aDate;
+                                }
+                                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                            }).map((loc) => (
                                 <div
                                     key={loc.id}
                                     className={`bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:bg-white/10 ${selectedLocId === loc.id ? 'ring-2 ring-purple-500 bg-white/10 shadow-lg shadow-purple-500/20' : ''}`}
                                     onClick={() => setSelectedLocId(loc.id)}
                                 >
-                                    <h3 className="font-semibold text-slate-100 text-lg mb-2">{loc.address}</h3>
-
-                                    {loc.contactPhone && (
-                                        <div className="flex items-center space-x-2 text-sm text-slate-400 mb-3">
-                                            <Phone className="w-3.5 h-3.5" />
-                                            <span>{loc.contactPhone}</span>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-xl mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
+                                                {(loc as any).name || loc.address}
+                                            </h3>
+                                            {(loc as any).name && <p className="text-sm text-slate-400 mb-3">{loc.address}</p>}
                                         </div>
-                                    )}
+                                        {isAdmin && (
+                                            <button
+                                                onClick={(e) => handleDeleteLocation(e, loc.id)}
+                                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors ml-2 shrink-0"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400 mb-3">
+                                        {(loc as any).contactName && (
+                                            <span className="flex items-center space-x-1">
+                                                <User className="w-3.5 h-3.5" />
+                                                <span>{(loc as any).contactName}</span>
+                                            </span>
+                                        )}
+                                        {loc.contactPhone && (
+                                            <span className="flex items-center space-x-1">
+                                                <Phone className="w-3.5 h-3.5" />
+                                                <span>{loc.contactPhone}</span>
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {loc.nextContactDate && (
                                         <div className={`flex items-center space-x-2 text-sm mb-3 ${new Date(loc.nextContactDate) <= new Date() ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
@@ -206,20 +310,54 @@ export default function DashboardClient() {
                                         </div>
                                         <div className="space-y-2 max-h-32 overflow-y-auto pr-1 text-sm custom-scrollbar">
                                             {loc.records.map(record => (
-                                                <div key={record.id} className="flex justify-between items-center border-b border-white/5 pb-1 last:border-0">
-                                                    <span className="text-slate-300 flex items-center"><Calendar className="w-3 h-3 mr-1.5 opacity-70" /> {new Date(record.date).toLocaleDateString()}</span>
-                                                    <span className="text-blue-300 flex items-center font-medium">+{record.quantity} <Box className="w-3 h-3 ml-1 opacity-70" /></span>
+                                                <div key={record.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-1.5 last:border-0 gap-1 sm:gap-0">
+                                                    <span className="text-slate-300 flex items-center whitespace-nowrap">
+                                                        <Calendar className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+                                                        {new Date(record.date).toLocaleDateString()}
+                                                    </span>
+                                                    <span className="text-blue-300 flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
+                                                        +{(record as any).itemType} {record.quantity} <Box className="w-3.5 h-3.5 ml-1.5 opacity-70" />
+                                                        {isAdmin && (
+                                                            <button
+                                                                onClick={(e) => handleDeleteRecord(e, loc.id, record.id)}
+                                                                className="ml-3 p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
+                                    {canEdit && (
+                                        <button
+                                            onClick={() => {
+                                                const latestRecord = [...loc.records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                                                setAddingRecordTo(loc.id);
+                                                setRecordItemType((latestRecord as any)?.itemType || "面紙");
+                                            }}
+                                            className="w-full mt-4 bg-white/5 hover:bg-white/10 text-blue-300 font-medium py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all border border-white/10"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            <span>登記新發放</span>
+                                        </button>
+                                    )}
+
                                     {addingRecordTo === loc.id ? (
-                                        <form onSubmit={(e) => submitNewRecord(e, loc.id)} className="space-y-3 pt-2 border-t border-white/10 onClick={(e) => e.stopPropagation()}">
-                                            <div className="grid grid-cols-2 gap-2">
+                                        <form onSubmit={(e) => submitNewRecord(e, loc.id)} className="space-y-3 pt-2 border-t border-white/10" onClick={(e) => e.stopPropagation()}>
+                                            <div className="grid grid-cols-3 gap-2">
                                                 <div>
                                                     <label className="text-xs text-slate-400 mb-1 block">日期</label>
                                                     <input type="date" value={recordDate} onChange={e => setRecordDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-slate-400 mb-1 block">物資種類</label>
+                                                    <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+                                                        <option value="面紙">面紙</option>
+                                                        <option value="扇子">扇子</option>
+                                                    </select>
                                                 </div>
                                                 <div>
                                                     <label className="text-xs text-slate-400 mb-1 block">數量</label>
@@ -227,8 +365,12 @@ export default function DashboardClient() {
                                                 </div>
                                             </div>
                                             <div className="mt-2">
-                                                <label className="text-xs text-slate-400 mb-1 block">下次聯絡日 (選填)</label>
-                                                <input type="date" value={recordNextContactDate} onChange={e => setRecordNextContactDate(e.target.value)} className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                <label className="text-xs text-slate-400 mb-1 block">下次聯絡日 *</label>
+                                                <input type="date" value={recordNextContactDate} onChange={e => setRecordNextContactDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
+                                                <label className="flex items-center space-x-2 mt-1.5 cursor-pointer select-none" onClick={e => e.stopPropagation()}>
+                                                    <input type="checkbox" checked={recordAddToCalendar} onChange={e => setRecordAddToCalendar(e.target.checked)} className="w-3.5 h-3.5 rounded accent-purple-500" />
+                                                    <span className="text-xs text-slate-400">📅 建立 Google Calendar 提醒</span>
+                                                </label>
                                             </div>
                                             <div className="flex space-x-2">
                                                 <button type="button" onClick={(e) => { e.stopPropagation(); setAddingRecordTo(null); }} className="flex-1 py-2 rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 text-sm transition-colors">取消</button>
@@ -270,19 +412,39 @@ export default function DashboardClient() {
 
                             <form onSubmit={submitNewLocation} className="space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">搜尋並選擇地點 *</label>
-                                    <AddressInput onPlaceSelected={handlePlaceSelected} />
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">地點名稱 *</label>
+                                    <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：全家松山店" required className="w-full glass-input px-4 py-3 rounded-xl" />
                                 </div>
 
                                 <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話 (選填)</label>
-                                    <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">搜尋並選擇地點 *</label>
+                                    <AddressInput onPlaceSelected={handlePlaceSelected} placeholder="請輸入欲發放選舉物資的地點或地址" />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名 *</label>
+                                        <input type="text" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="王小明" required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話 *</label>
+                                        <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
                                         <label className="text-sm font-medium text-slate-300 mb-1.5 block">發放日期 *</label>
                                         <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">物資種類 *</label>
+                                        <div className="relative">
+                                            <select value={itemType} onChange={e => setItemType(e.target.value)} className="w-full glass-input px-4 py-3 rounded-xl appearance-none">
+                                                <option value="面紙" className="text-black">面紙</option>
+                                                <option value="扇子" className="text-black">扇子</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-300 mb-1.5 block">本次發放數量 *</label>
@@ -294,8 +456,12 @@ export default function DashboardClient() {
                                 </div>
 
                                 <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">提醒幾天後聯絡 (輸入下次聯絡日期，選填)</label>
-                                    <input type="date" value={nextContactDate} onChange={e => setNextContactDate(e.target.value)} className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">下次聯絡日期 *</label>
+                                    <input type="date" value={nextContactDate} onChange={e => setNextContactDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    <label className="flex items-center space-x-2 mt-2 cursor-pointer select-none">
+                                        <input type="checkbox" checked={addToCalendar} onChange={e => setAddToCalendar(e.target.checked)} className="w-4 h-4 rounded accent-purple-500" />
+                                        <span className="text-sm text-slate-300">📅 建立 Google Calendar 提醒活動</span>
+                                    </label>
                                 </div>
 
                                 <div className="pt-4 flex space-x-3">
