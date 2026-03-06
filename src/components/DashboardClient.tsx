@@ -422,14 +422,16 @@ export default function DashboardClient() {
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        <div className="flex space-x-1">
-                                                            <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="flex-1 glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
-                                                            <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-2 bg-purple-500 hover:bg-purple-400 rounded-lg text-white text-xs font-bold transition-colors">
-                                                                儲存
-                                                            </button>
-                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-xs transition-colors">
-                                                                ✕
-                                                            </button>
+                                                        <div className="flex space-x-1 items-center">
+                                                            <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="w-[80px] glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
+                                                            <div className="flex flex-col space-y-1">
+                                                                <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-1 bg-purple-500 hover:bg-purple-400 rounded-md text-white text-[10px] font-bold transition-colors">
+                                                                    儲存
+                                                                </button>
+                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded-md text-white text-[10px] transition-colors">
+                                                                    取消
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
