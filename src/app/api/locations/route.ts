@@ -14,6 +14,7 @@ export async function GET() {
                 latitude: true,
                 longitude: true,
                 contactName: true,
+                contactPhone: true,
                 nextContactDate: true,
                 type: true,
                 imageUrl: true,
