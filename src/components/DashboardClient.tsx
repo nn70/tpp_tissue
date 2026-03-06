@@ -5,6 +5,7 @@ import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
 import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon } from "lucide-react";
 import exifr from 'exifr';
+import imageCompression from 'browser-image-compression';
 import { Location, DistributionRecord } from "@prisma/client";
 import { useSession } from "next-auth/react";
 
@@ -45,6 +46,7 @@ export default function DashboardClient() {
     const [isAddingBillboard, setIsAddingBillboard] = useState(false);
     const [billboardStep, setBillboardStep] = useState<'upload' | 'form' | 'manual'>('upload');
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [newImageUrl, setNewImageUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 為既存地點新增紀錄狀態
@@ -192,7 +194,26 @@ export default function DashboardClient() {
 
         setUploadingImage(true);
         try {
-            const gpsData = await exifr.gps(file);
+            // 先嘗試用原始檔案讀取 GPS
+            const gpsData = await exifr.gps(file).catch(() => null);
+
+            // 進行照片壓縮，最大寬度或高度為 480px
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 480,
+                useWebWorker: true,
+                fileType: "image/jpeg" as const
+            };
+            const compressedFile = await imageCompression(file, options);
+
+            // 轉成 Base64 字串
+            const reader = new FileReader();
+            reader.readAsDataURL(compressedFile);
+            const base64data = await new Promise<string>((resolve) => {
+                reader.onloadend = () => resolve(reader.result as string);
+            });
+            setNewImageUrl(base64data);
+
             if (gpsData && gpsData.latitude && gpsData.longitude) {
                 setNewLat(gpsData.latitude);
                 setNewLng(gpsData.longitude);
@@ -231,7 +252,8 @@ export default function DashboardClient() {
                     itemType,
                     initialQuantity: Number(quantity),
                     date,
-                    nextContactDate: nextContactDate ? nextContactDate : undefined
+                    nextContactDate: nextContactDate ? nextContactDate : undefined,
+                    imageUrl: newImageUrl // 把縮圖一起傳給後端
                 }),
             });
 
@@ -302,6 +324,7 @@ export default function DashboardClient() {
         setNextContactDate(getTwoWeeksLater());
         setAddToCalendar(true);
         setBillboardStep('upload');
+        setNewImageUrl(null);
     };
 
     const handleDeleteLocation = async (e: React.MouseEvent, id: string) => {
@@ -439,7 +462,12 @@ export default function DashboardClient() {
                                             <h3 className="font-bold text-xl mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
                                                 {(loc as any).name || loc.address}
                                             </h3>
-                                            {(loc as any).name && <p className="text-sm text-slate-400 mb-3">{loc.address}</p>}
+                                            {(loc as any).name && <p className="text-sm text-slate-400 mb-2">{loc.address}</p>}
+                                            {(loc as any).type === 'BILLBOARD' && (loc as any).imageUrl && (
+                                                <div className="mt-2 mb-3">
+                                                    <img src={(loc as any).imageUrl} alt="看板照片" className="h-24 w-auto rounded-lg border border-white/10 object-cover shadow-sm" />
+                                                </div>
+                                            )}
                                         </div>
                                         {isAdmin && (
                                             <button
@@ -719,6 +747,12 @@ export default function DashboardClient() {
                                 <h2 className="text-2xl font-bold flex items-center text-teal-400"><MapIcon className="mr-2" /> 新增看板位置</h2>
                                 <button onClick={() => { setIsAddingBillboard(false); setBillboardStep('upload'); }} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
                             </div>
+
+                            {newImageUrl && (
+                                <div className="mb-6 flex justify-center bg-black/20 p-2 rounded-2xl">
+                                    <img src={newImageUrl} alt="預覽看板照片" className="h-48 object-contain rounded-xl shadow-lg border border-white/10" />
+                                </div>
+                            )}
 
                             {billboardStep === 'manual' && (
                                 <div className="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-200">

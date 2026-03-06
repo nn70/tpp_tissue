@@ -14,9 +14,9 @@ export async function GET() {
                 latitude: true,
                 longitude: true,
                 contactName: true,
-                contactPhone: true,
                 nextContactDate: true,
                 type: true,
+                imageUrl: true,
                 updatedAt: true,
                 records: {
                     select: {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { type, name, address, latitude, longitude, contactName, contactPhone, itemType, initialQuantity, date, nextContactDate } = body;
+        const { type, name, address, latitude, longitude, contactName, contactPhone, itemType, initialQuantity, date, nextContactDate, imageUrl } = body;
 
         const locationType = type === "BILLBOARD" ? "BILLBOARD" : "SUPPLY";
 
@@ -71,6 +71,7 @@ export async function POST(request: Request) {
                 contactPhone: locationType === "SUPPLY" ? contactPhone : null,
                 nextContactDate: (locationType === "SUPPLY" && nextContactDate) ? new Date(nextContactDate) : null,
                 type: locationType,
+                imageUrl: locationType === "BILLBOARD" ? imageUrl : null,
                 records: locationType === "SUPPLY" ? {
                     create: {
                         itemType: itemType || "面紙",

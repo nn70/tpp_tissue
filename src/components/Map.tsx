@@ -97,6 +97,12 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                                         <p className="text-xs text-gray-500 mb-2 truncate" title={loc.address}>{loc.address}</p>
                                     )}
 
+                                    {(loc as any).type === 'BILLBOARD' && (loc as any).imageUrl && (
+                                        <div className="mt-2 mb-1 flex justify-center">
+                                            <img src={(loc as any).imageUrl} alt="看板照片" className="w-full max-h-[140px] object-cover rounded-md border border-gray-200 shadow-sm" />
+                                        </div>
+                                    )}
+
                                     {(loc as any).type !== 'BILLBOARD' && (
                                         <div className="text-sm mt-2">
                                             {(loc as any).contactName && (
