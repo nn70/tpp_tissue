@@ -427,19 +427,19 @@ export default function DashboardClient() {
                                                 <div>
                                                     <label className="text-xs text-slate-400 mb-1 block">物資種類</label>
                                                     {!isAddingCategory ? (
-                                                        <div className="flex space-x-2">
-                                                            <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="flex-1 glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+                                                        <div className="flex space-x-1 items-center">
+                                                            <select value={recordItemType} onChange={e => setRecordItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
                                                                 {categories.map(cat => (
                                                                     <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
                                                                 ))}
                                                             </select>
                                                             {canEdit && (
-                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(true); }} className="px-2 py-2 glass-input rounded-lg text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                                <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(true); }} className="shrink-0 p-1.5 glass-input rounded-md text-slate-400 hover:text-white transition-colors" title="新增種類">
                                                                     <Plus className="w-4 h-4" />
                                                                 </button>
                                                             )}
                                                             {isAdmin && recordItemType !== "面紙" && recordItemType !== "扇子" && (
-                                                                <button type="button" onClick={(e) => { e.stopPropagation(); const cat = categories.find(c => c.name === recordItemType); if (cat) handleDeleteCategory(cat.id); }} className="px-2 py-2 glass-input rounded-lg text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                                <button type="button" onClick={(e) => { e.stopPropagation(); const cat = categories.find(c => c.name === recordItemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-1.5 glass-input rounded-md text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
                                                                     <Trash2 className="w-4 h-4" />
                                                                 </button>
                                                             )}
@@ -539,19 +539,19 @@ export default function DashboardClient() {
                                     <div>
                                         <label className="text-sm font-medium text-slate-300 mb-1.5 block">物資種類 *</label>
                                         {!isAddingCategory ? (
-                                            <div className="flex space-x-2 relative">
-                                                <select value={itemType} onChange={e => setItemType(e.target.value)} className="flex-1 glass-input px-4 py-3 rounded-xl appearance-none">
+                                            <div className="flex space-x-1 items-center">
+                                                <select value={itemType} onChange={e => setItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-3 rounded-xl">
                                                     {categories.map(cat => (
                                                         <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
                                                     ))}
                                                 </select>
                                                 {canEdit && (
-                                                    <button type="button" onClick={() => setIsAddingCategory(true)} className="px-3 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                    <button type="button" onClick={() => setIsAddingCategory(true)} className="shrink-0 p-2.5 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
                                                         <Plus className="w-5 h-5" />
                                                     </button>
                                                 )}
                                                 {isAdmin && itemType !== "面紙" && itemType !== "扇子" && (
-                                                    <button type="button" onClick={() => { const cat = categories.find(c => c.name === itemType); if (cat) handleDeleteCategory(cat.id); }} className="px-3 glass-input rounded-xl text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                    <button type="button" onClick={() => { const cat = categories.find(c => c.name === itemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-2.5 glass-input rounded-xl text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 )}
