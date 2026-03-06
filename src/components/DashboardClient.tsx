@@ -17,6 +17,7 @@ export default function DashboardClient() {
     const [selectedLocId, setSelectedLocId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState<'updated' | 'lastDate'>('updated');
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === "ADMIN";
     const canEdit = isAdmin || (session?.user as any)?.role === "EDITOR";
@@ -402,13 +403,19 @@ export default function DashboardClient() {
                             <ArrowUpDown className="w-4 h-4 text-slate-400" />
                             <span className="text-xs text-slate-400">排序：</span>
                             <button
-                                onClick={() => setSortBy('updated')}
-                                className={`text-xs px-2 py-1 rounded-lg transition-colors ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
-                            >最近更新</button>
+                                onClick={() => {
+                                    if (sortBy === 'updated') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+                                    else { setSortBy('updated'); setSortOrder('desc'); }
+                                }}
+                                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                            >最近更新 {sortBy === 'updated' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
                             <button
-                                onClick={() => setSortBy('lastDate')}
-                                className={`text-xs px-2 py-1 rounded-lg transition-colors ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
-                            >最近發放</button>
+                                onClick={() => {
+                                    if (sortBy === 'lastDate') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+                                    else { setSortBy('lastDate'); setSortOrder('desc'); }
+                                }}
+                                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                            >最近發放 {sortBy === 'lastDate' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
                         </div>
 
                         {/* 分類篩選按鈕區 */}
@@ -445,12 +452,15 @@ export default function DashboardClient() {
                                 const t = (loc as any).type || 'SUPPLY';
                                 return t === filterType;
                             }).sort((a, b) => {
+                                let comparison = 0;
                                 if (sortBy === 'lastDate') {
                                     const aDate = a.records.length > 0 ? new Date(a.records[0].date).getTime() : 0;
                                     const bDate = b.records.length > 0 ? new Date(b.records[0].date).getTime() : 0;
-                                    return bDate - aDate;
+                                    comparison = bDate - aDate;
+                                } else {
+                                    comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
                                 }
-                                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                                return sortOrder === 'desc' ? comparison : -comparison;
                             }).map((loc) => (
                                 <div
                                     key={loc.id}
