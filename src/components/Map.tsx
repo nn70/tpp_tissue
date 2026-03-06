@@ -98,8 +98,8 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                                     )}
 
                                     {(loc as any).type === 'BILLBOARD' && (loc as any).imageUrl && (
-                                        <div className="mt-2 mb-1 flex justify-center">
-                                            <img src={(loc as any).imageUrl} alt="看板照片" className="w-full max-h-[140px] object-cover rounded-md border border-gray-200 shadow-sm" />
+                                        <div className="mt-2 mb-1 flex justify-center bg-gray-50 p-1 rounded-md border border-gray-100">
+                                            <img src={(loc as any).imageUrl} alt="看板照片" className="w-full max-h-[300px] object-contain rounded shadow-sm" />
                                         </div>
                                     )}
 

@@ -464,8 +464,8 @@ export default function DashboardClient() {
                                             </h3>
                                             {(loc as any).name && <p className="text-sm text-slate-400 mb-2">{loc.address}</p>}
                                             {(loc as any).type === 'BILLBOARD' && (loc as any).imageUrl && (
-                                                <div className="mt-2 mb-3">
-                                                    <img src={(loc as any).imageUrl} alt="看板照片" className="h-24 w-auto rounded-lg border border-white/10 object-cover shadow-sm" />
+                                                <div className="mt-3 mb-4 flex justify-center bg-black/30 rounded-lg p-2">
+                                                    <img src={(loc as any).imageUrl} alt="看板照片" className="w-full max-h-60 rounded border border-white/5 object-contain shadow-sm" />
                                                 </div>
                                             )}
                                         </div>
