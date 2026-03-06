@@ -39,7 +39,9 @@ export default function Navigation() {
                         </Link>
 
                         <Link
-                            href="/forum"
+                            href="https://registerforum.vercel.app/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300
                                 ${isForum
                                     ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/50 shadow-lg shadow-blue-500/10'
