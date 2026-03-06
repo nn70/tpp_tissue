@@ -119,6 +119,24 @@ export default function DashboardClient() {
         }
     };
 
+    const handleDeleteCategory = async (categoryId: string) => {
+        if (!confirm("確定要刪除這個物資種類嗎？這將會更新介面的選單。")) return;
+
+        try {
+            const res = await fetch(`/api/item-categories/${categoryId}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                await fetchCategories();
+            } else {
+                alert("刪除失敗，可能是預設種類或權限不足");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("系統錯誤");
+        }
+    };
+
     // 開啟 Google Calendar 建立提醒事件
     const openGoogleCalendar = (eventDate: string, locationName: string, address: string) => {
         const d = new Date(eventDate);
@@ -420,6 +438,11 @@ export default function DashboardClient() {
                                                                     <Plus className="w-4 h-4" />
                                                                 </button>
                                                             )}
+                                                            {isAdmin && recordItemType !== "面紙" && recordItemType !== "扇子" && (
+                                                                <button type="button" onClick={(e) => { e.stopPropagation(); const cat = categories.find(c => c.name === recordItemType); if (cat) handleDeleteCategory(cat.id); }} className="px-2 py-2 glass-input rounded-lg text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     ) : (
                                                         <div className="flex space-x-1 items-center">
@@ -525,6 +548,11 @@ export default function DashboardClient() {
                                                 {canEdit && (
                                                     <button type="button" onClick={() => setIsAddingCategory(true)} className="px-3 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
                                                         <Plus className="w-5 h-5" />
+                                                    </button>
+                                                )}
+                                                {isAdmin && itemType !== "面紙" && itemType !== "扇子" && (
+                                                    <button type="button" onClick={() => { const cat = categories.find(c => c.name === itemType); if (cat) handleDeleteCategory(cat.id); }} className="px-3 glass-input rounded-xl text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                        <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 )}
                                             </div>
