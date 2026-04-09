@@ -73,13 +73,47 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                 const isSelected = selectedLocationId === loc.id;
                 const totalQuantity = loc.records.reduce((sum, r) => sum + r.quantity, 0);
 
+                // 判斷是否「該聯絡了」（nextContactDate 已到期）
+                const isOverdue = loc.nextContactDate
+                    ? new Date(loc.nextContactDate) <= new Date()
+                    : false;
+
+                // 標記名稱標籤設定
+                const displayName = (loc as any).name || loc.address || '';
+                const labelText = displayName.length > 10
+                    ? displayName.substring(0, 10) + '…'
+                    : displayName;
+
+                const markerLabel: google.maps.MarkerLabel = {
+                    text: labelText,
+                    color: isOverdue ? '#FF3B30' : '#1a1a2e',
+                    fontWeight: isOverdue ? 'bold' : '600',
+                    fontSize: '11px',
+                    // 若「該聯絡了」，在文字前加上警示圖示
+                };
+
                 return (
                     <Marker
                         key={loc.id}
                         position={{ lat: loc.latitude, lng: loc.longitude }}
                         onClick={() => onSelectMarker(loc.id)}
                         animation={isSelected && window.google ? window.google.maps.Animation.BOUNCE : undefined}
-                        icon={(loc as any).type === 'BILLBOARD' ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : undefined}
+                        icon={(loc as any).type === 'BILLBOARD'
+                            ? {
+                                url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                                labelOrigin: new window.google.maps.Point(16, -6),
+                            }
+                            : isOverdue
+                                ? {
+                                    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                                    labelOrigin: new window.google.maps.Point(16, -6),
+                                }
+                                : {
+                                    url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                                    labelOrigin: new window.google.maps.Point(16, -6),
+                                }
+                        }
+                        label={markerLabel}
                     >
                         {isSelected && (
                             <InfoWindow onCloseClick={() => onSelectMarker(null)}>
