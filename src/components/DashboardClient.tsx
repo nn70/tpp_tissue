@@ -554,10 +554,10 @@ export default function DashboardClient() {
                                             )}
                                         </div>
                                         {isLoggedIn && (
-                                            <div className="flex items-center gap-1 ml-2 shrink-0">
+                                            <div className="flex items-center gap-1.5 ml-2 shrink-0">
                                                 <button
                                                     onClick={(e) => openEditModal(e, loc)}
-                                                    className="p-1.5 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                                                    className="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 rounded-lg transition-colors border border-blue-500/30 flex items-center"
                                                     title="編輯"
                                                 >
                                                     <Pencil className="w-4 h-4" />
@@ -565,7 +565,7 @@ export default function DashboardClient() {
                                                 {isAdmin && (
                                                     <button
                                                         onClick={(e) => handleDeleteLocation(e, loc.id)}
-                                                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                        className="p-2 bg-slate-800/50 text-slate-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors border border-white/5"
                                                         title="刪除"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
