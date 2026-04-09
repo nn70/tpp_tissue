@@ -59,7 +59,8 @@ export default function DashboardClient() {
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
-    const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD'>('ALL'); // 新增清單過濾狀態
+    const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 新增清單過濾狀態
+    const [isAddingProspect, setIsAddingProspect] = useState(false); // 待開發商家 Modal 狀態
 
     // 新增種類狀態
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -234,7 +235,7 @@ export default function DashboardClient() {
         }
     };
 
-    const submitNewLocation = async (e: React.FormEvent, type: "SUPPLY" | "BILLBOARD" = "SUPPLY") => {
+    const submitNewLocation = async (e: React.FormEvent, type: "SUPPLY" | "BILLBOARD" | "PROSPECT" = "SUPPLY") => {
         e.preventDefault();
         if (!newAddress || newLat === null || newLng === null) return alert("請透過自動完成選擇一個有效地址或是上傳含有地理資訊的照片");
 
@@ -265,6 +266,7 @@ export default function DashboardClient() {
                 }
                 setIsAddingNew(false);
                 setIsAddingBillboard(false);
+                setIsAddingProspect(false);
                 resetForm();
                 fetchLocations();
             } else {
@@ -385,10 +387,17 @@ export default function DashboardClient() {
                                 <button
                                     onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
                                     disabled={uploadingImage}
-                                    className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-teal-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+                                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 disabled:opacity-50"
                                 >
                                     {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
                                     <span>新增看板位置 (自動讀取照片座標)</span>
+                                </button>
+                                <button
+                                    onClick={() => { setIsAddingProspect(true); setIsAddingNew(false); setIsAddingBillboard(false); resetForm(); }}
+                                    className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20 transition-all transform active:scale-95"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    <span>新增待開發商家</span>
                                 </button>
                                 <input
                                     type="file"
@@ -419,7 +428,7 @@ export default function DashboardClient() {
                         </div>
 
                         {/* 分類篩選按鈕區 */}
-                        <div className="flex bg-black/20 rounded-xl p-1 gap-1">
+                        <div className="flex bg-black/20 rounded-xl p-1 gap-1 flex-wrap">
                             <button
                                 onClick={() => setFilterType('ALL')}
                                 className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'ALL' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
@@ -430,8 +439,12 @@ export default function DashboardClient() {
                             >📦 物資站</button>
                             <button
                                 onClick={() => setFilterType('BILLBOARD')}
-                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'BILLBOARD' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'BILLBOARD' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
                             >📍 看板</button>
+                            <button
+                                onClick={() => setFilterType('PROSPECT')}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'PROSPECT' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                            >🎯 待開發</button>
                         </div>
                     </div>
 
@@ -469,9 +482,17 @@ export default function DashboardClient() {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-bold text-xl mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
-                                                {(loc as any).name || loc.address}
-                                            </h3>
+                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                <h3 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
+                                                    {(loc as any).name || loc.address}
+                                                </h3>
+                                                {(loc as any).type === 'BILLBOARD' && (
+                                                    <span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full border border-blue-500/30 shrink-0">📍 看板</span>
+                                                )}
+                                                {(loc as any).type === 'PROSPECT' && (
+                                                    <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full border border-red-500/30 shrink-0">🎯 待開發</span>
+                                                )}
+                                            </div>
                                             {(loc as any).name && <p className="text-sm text-slate-400 mb-2">{loc.address}</p>}
                                             {(loc as any).type === 'BILLBOARD' && (loc as any).imageUrl && (
                                                 <div className="mt-3 mb-4 flex justify-center bg-black/30 rounded-lg p-2">
@@ -514,7 +535,7 @@ export default function DashboardClient() {
                                         </div>
                                     )}
 
-                                    {(loc as any).type !== 'BILLBOARD' && (
+                                    {(loc as any).type !== 'BILLBOARD' && (loc as any).type !== 'PROSPECT' && (
                                         <>
                                             <div className="bg-black/20 rounded-xl p-3 mb-3 mt-3">
                                                 <div className="flex justify-between items-center text-sm mb-2">
@@ -809,6 +830,52 @@ export default function DashboardClient() {
                                 </form>
                             )}
 
+                        </div>
+                    </div>
+                )}
+
+                {/* 新增待開發商家 Modal */}
+                {isAddingProspect && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="glass-panel w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold flex items-center text-red-400"><MapPin className="mr-2" /> 新增待開發商家</h2>
+                                <button onClick={() => { setIsAddingProspect(false); resetForm(); }} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
+                            </div>
+
+                            <form onSubmit={(e) => submitNewLocation(e, "PROSPECT")} className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">商家名稱 *</label>
+                                    <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：全家松山店" required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">搜尋並選擇地點 *</label>
+                                    <AddressInput onPlaceSelected={handlePlaceSelected} placeholder="請輸入商家地址" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名</label>
+                                        <input type="text" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="王小明" className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話</label>
+                                        <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" className="w-full glass-input px-4 py-3 rounded-xl" />
+                                    </div>
+                                </div>
+
+                                {newLat && newLng && (
+                                    <div className="text-xs text-green-400 bg-green-400/10 p-2 rounded-lg border border-green-400/20">
+                                        ✅ 已鎖定座標：{newLat.toFixed(5)}, {newLng.toFixed(5)}
+                                    </div>
+                                )}
+
+                                <div className="pt-4 flex space-x-3">
+                                    <button type="button" onClick={() => { setIsAddingProspect(false); resetForm(); }} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
+                                    <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 transition shadow-lg shadow-red-500/20">建立待開發商家</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

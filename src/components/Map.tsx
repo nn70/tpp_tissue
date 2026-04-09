@@ -78,6 +78,9 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                     ? new Date(loc.nextContactDate) <= new Date()
                     : false;
 
+                // 判斷是否為待開發商家
+                const isProspect = (loc as any).type === 'PROSPECT';
+
                 // 標記名稱標籤設定
                 const displayName = (loc as any).name || loc.address || '';
                 const labelText = displayName.length > 10
@@ -86,10 +89,9 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
 
                 const markerLabel: google.maps.MarkerLabel = {
                     text: labelText,
-                    color: isOverdue ? '#FF3B30' : '#1a1a2e',
-                    fontWeight: isOverdue ? 'bold' : '600',
+                    color: (isOverdue || isProspect) ? '#FF3B30' : '#1a1a2e',
+                    fontWeight: (isOverdue || isProspect) ? 'bold' : '600',
                     fontSize: '11px',
-                    // 若「該聯絡了」，在文字前加上警示圖示
                 };
 
                 return (
@@ -100,18 +102,27 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                         animation={isSelected && window.google ? window.google.maps.Animation.BOUNCE : undefined}
                         icon={(loc as any).type === 'BILLBOARD'
                             ? {
-                                url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                                // 看板：藍色圖釘
+                                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
                                 labelOrigin: new window.google.maps.Point(16, -6),
                             }
-                            : isOverdue
+                            : isProspect
                                 ? {
+                                    // 待開發商家：紅色圖釘
                                     url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
                                     labelOrigin: new window.google.maps.Point(16, -6),
                                 }
-                                : {
-                                    url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                                    labelOrigin: new window.google.maps.Point(16, -6),
-                                }
+                                : isOverdue
+                                    ? {
+                                        // 逐期物資站：紅色圖釘
+                                        url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                                        labelOrigin: new window.google.maps.Point(16, -6),
+                                    }
+                                    : {
+                                        // 正常物資站：綠色圖釘
+                                        url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                                        labelOrigin: new window.google.maps.Point(16, -6),
+                                    }
                         }
                         label={markerLabel}
                     >
@@ -123,7 +134,10 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                                             {(loc as any).name || loc.address}
                                         </h3>
                                         {(loc as any).type === 'BILLBOARD' && (
-                                            <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">看板</span>
+                                            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">看板</span>
+                                        )}
+                                        {(loc as any).type === 'PROSPECT' && (
+                                            <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">待開發</span>
                                         )}
                                     </div>
 
