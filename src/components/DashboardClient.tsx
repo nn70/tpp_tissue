@@ -467,18 +467,18 @@ export default function DashboardClient() {
                             <div className="flex flex-row space-x-2">
                                 <button
                                     onClick={() => { setIsAddingNew(true); setIsAddingBillboard(false); resetForm(); }}
-                                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
+                                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95"
                                 >
-                                    <Plus className="w-5 h-5 shrink-0" />
+                                    <Plus className="w-4 h-4 shrink-0" />
                                     <span className="text-[13px] font-medium leading-tight">新增據點</span>
                                 </button>
 
                                 <button
                                     onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
                                     disabled={uploadingImage}
-                                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-medium py-3 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+                                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-medium py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95 disabled:opacity-50"
                                 >
-                                    {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin shrink-0" /> : <Camera className="w-5 h-5 shrink-0" />}
+                                    {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <Camera className="w-4 h-4 shrink-0" />}
                                     <span className="text-[13px] font-medium leading-tight">新增看板</span>
                                 </button>
                                 <input
