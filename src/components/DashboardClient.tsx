@@ -464,22 +464,22 @@ export default function DashboardClient() {
                 <div className="flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel md:border-r border-t md:border-t-0 border-white/10 z-10 shrink-0 flex-1 md:h-full order-2 md:order-1 overflow-hidden">
                     <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
                         {canEdit && (
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-row space-x-2">
                                 <button
                                     onClick={() => { setIsAddingNew(true); setIsAddingBillboard(false); resetForm(); }}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
+                                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-3 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg shadow-purple-500/20 transition-all transform active:scale-95"
                                 >
-                                    <Plus className="w-5 h-5" />
-                                    <span>新增選舉物資發放據點</span>
+                                    <Plus className="w-5 h-5 shrink-0" />
+                                    <span className="text-[13px] font-medium leading-tight">新增據點</span>
                                 </button>
 
                                 <button
                                     onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
                                     disabled={uploadingImage}
-                                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+                                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-medium py-3 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 disabled:opacity-50"
                                 >
-                                    {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
-                                    <span>新增看板位置 (自動讀取照片座標)</span>
+                                    {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin shrink-0" /> : <Camera className="w-5 h-5 shrink-0" />}
+                                    <span className="text-[13px] font-medium leading-tight">新增看板</span>
                                 </button>
                                 <input
                                     type="file"
@@ -750,7 +750,7 @@ export default function DashboardClient() {
                 </div>
 
                 {/* Map Area (Mobile: Top half, Desktop: Right panel) */}
-                <div className="flex-none h-[30vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
+                <div className="flex-none h-[40vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
                     <Map
                         locations={locations}
                         selectedLocationId={selectedLocId}
