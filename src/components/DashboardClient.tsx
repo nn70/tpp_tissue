@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
-import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon, Pencil } from "lucide-react";
+import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon, Pencil, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import exifr from 'exifr';
 import imageCompression from 'browser-image-compression';
 import { Location, DistributionRecord } from "@prisma/client";
@@ -423,6 +424,35 @@ export default function DashboardClient() {
         }
     };
 
+    const handleExportExcel = () => {
+        // 匯出目前所有的據點資料
+        const dataToExport = locations.map(loc => {
+            let typeStr = "物資站";
+            if ((loc as any).type === 'BILLBOARD') typeStr = "看板";
+            if ((loc as any).type === 'PROSPECT') typeStr = "待開發";
+            
+            const totalQuantity = loc.records?.reduce((acc, r) => acc + r.quantity, 0) || 0;
+
+            return {
+                "種類": typeStr,
+                "名稱": (loc as any).name || "",
+                "地址": loc.address || "",
+                "緯度": loc.latitude,
+                "經度": loc.longitude,
+                "聯絡人": (loc as any).contactName || "",
+                "電話": loc.contactPhone || "",
+                "總發放量(盒)": totalQuantity,
+                "下次聯絡日": loc.nextContactDate ? new Date(loc.nextContactDate).toLocaleDateString() : "",
+                "最後更新時間": new Date(loc.updatedAt).toLocaleString()
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "據點資料");
+        XLSX.writeFile(workbook, "店家看板資料_匯出.xlsx");
+    };
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100 pt-16">
 
@@ -461,23 +491,28 @@ export default function DashboardClient() {
                                 />
                             </div>
                         )}
-                        <div className="flex items-center space-x-2">
-                            <ArrowUpDown className="w-4 h-4 text-slate-400" />
-                            <span className="text-xs text-slate-400">排序：</span>
-                            <button
-                                onClick={() => {
-                                    if (sortBy === 'updated') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
-                                    else { setSortBy('updated'); setSortOrder('desc'); }
-                                }}
-                                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
-                            >最近更新 {sortBy === 'updated' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
-                            <button
-                                onClick={() => {
-                                    if (sortBy === 'lastDate') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
-                                    else { setSortBy('lastDate'); setSortOrder('desc'); }
-                                }}
-                                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
-                            >最近發放 {sortBy === 'lastDate' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <ArrowUpDown className="w-4 h-4 text-slate-400" />
+                                <span className="text-xs text-slate-400">排序：</span>
+                                <button
+                                    onClick={() => {
+                                        if (sortBy === 'updated') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+                                        else { setSortBy('updated'); setSortOrder('desc'); }
+                                    }}
+                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                                >最近更新 {sortBy === 'updated' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
+                                <button
+                                    onClick={() => {
+                                        if (sortBy === 'lastDate') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+                                        else { setSortBy('lastDate'); setSortOrder('desc'); }
+                                    }}
+                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                                >最近發放 {sortBy === 'lastDate' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
+                            </div>
+                            <button onClick={handleExportExcel} className="text-xs flex items-center gap-1 bg-green-600/20 text-green-400 hover:bg-green-600/40 px-2.5 py-1.5 rounded-lg transition-colors border border-green-500/30">
+                                <Download className="w-3.5 h-3.5" /> 匯出 Excel
+                            </button>
                         </div>
 
                         {/* 分類篩選按鈕區 */}
