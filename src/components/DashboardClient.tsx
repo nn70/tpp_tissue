@@ -59,8 +59,8 @@ export default function DashboardClient() {
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
-    const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 新增清單過濾狀態
-    const [isAddingProspect, setIsAddingProspect] = useState(false); // 待開發商家 Modal 狀態
+    const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 清單過濾狀態
+    const [isProspectMode, setIsProspectMode] = useState(false); // 建立據點時，是否為待開發商家
 
     // 新增種類狀態
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -237,6 +237,8 @@ export default function DashboardClient() {
 
     const submitNewLocation = async (e: React.FormEvent, type: "SUPPLY" | "BILLBOARD" | "PROSPECT" = "SUPPLY") => {
         e.preventDefault();
+        // 若為待開發模式，覆寫 type
+        const finalType = isProspectMode ? "PROSPECT" : type;
         if (!newAddress || newLat === null || newLng === null) return alert("請透過自動完成選擇一個有效地址或是上傳含有地理資訊的照片");
 
         try {
@@ -244,7 +246,7 @@ export default function DashboardClient() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    type,
+                    type: finalType,
                     name: newName || undefined,
                     address: newAddress,
                     latitude: newLat,
@@ -261,13 +263,12 @@ export default function DashboardClient() {
 
             if (res.ok) {
                 // 如果有勾選「建立 Google Calendar」且有設定下次聯絡日
-                if (addToCalendar && nextContactDate && type === "SUPPLY") {
+                if (addToCalendar && nextContactDate && finalType === "SUPPLY") {
                     openGoogleCalendar(nextContactDate, newName, newAddress);
                 }
                 setIsAddingNew(false);
                 setIsAddingBillboard(false);
-                setIsAddingProspect(false);
-                resetForm();
+                resetForm(); // resetForm 已包含重設 isProspectMode
                 fetchLocations();
             } else {
                 const errData = await res.json().catch(() => ({}));
@@ -328,6 +329,7 @@ export default function DashboardClient() {
         setAddToCalendar(true);
         setBillboardStep('upload');
         setNewImageUrl(null);
+        setIsProspectMode(false); // 該等待開發模式
     };
 
     const handleDeleteLocation = async (e: React.MouseEvent, id: string) => {
@@ -391,13 +393,6 @@ export default function DashboardClient() {
                                 >
                                     {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
                                     <span>新增看板位置 (自動讀取照片座標)</span>
-                                </button>
-                                <button
-                                    onClick={() => { setIsAddingProspect(true); setIsAddingNew(false); setIsAddingBillboard(false); resetForm(); }}
-                                    className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-red-500/20 transition-all transform active:scale-95"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                    <span>新增待開發商家</span>
                                 </button>
                                 <input
                                     type="file"
@@ -685,6 +680,20 @@ export default function DashboardClient() {
                             </div>
 
                             <form onSubmit={submitNewLocation} className="space-y-4">
+
+                                {/* 待開發商家 Checkbox */}
+                                <label className={`flex items-center space-x-3 cursor-pointer select-none p-3 rounded-xl border transition-all ${isProspectMode ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isProspectMode}
+                                        onChange={e => setIsProspectMode(e.target.checked)}
+                                        className="w-4 h-4 rounded accent-red-500"
+                                    />
+                                    <span className={`text-sm font-medium ${isProspectMode ? 'text-red-300' : 'text-slate-300'}`}>
+                                        🎯 此為待開發商家（尚未發放選舉物資）
+                                    </span>
+                                </label>
+
                                 <div>
                                     <label className="text-sm font-medium text-slate-300 mb-1.5 block">地點名稱 *</label>
                                     <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：全家松山店" required className="w-full glass-input px-4 py-3 rounded-xl" />
@@ -697,73 +706,80 @@ export default function DashboardClient() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名 *</label>
-                                        <input type="text" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="王小明" required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名{isProspectMode ? '' : ' *'}</label>
+                                        <input type="text" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="王小明" required={!isProspectMode} className="w-full glass-input px-4 py-3 rounded-xl" />
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話 *</label>
-                                        <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話{isProspectMode ? '' : ' *'}</label>
+                                        <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" required={!isProspectMode} className="w-full glass-input px-4 py-3 rounded-xl" />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">發放日期 *</label>
-                                        <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">物資種類 *</label>
-                                        {!isAddingCategory ? (
-                                            <div className="flex space-x-1 items-center">
-                                                <select value={itemType} onChange={e => setItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-3 rounded-xl">
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
-                                                    ))}
-                                                </select>
-                                                {canEdit && (
-                                                    <button type="button" onClick={() => setIsAddingCategory(true)} className="shrink-0 p-2.5 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
-                                                        <Plus className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                                {isAdmin && itemType !== "面紙" && itemType !== "扇子" && (
-                                                    <button type="button" onClick={() => { const cat = categories.find(c => c.name === itemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-2.5 glass-input rounded-xl text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
-                                                        <Trash2 className="w-5 h-5" />
-                                                    </button>
+                                {/* 待開發模式：隱藏發放相關欄位 */}
+                                {!isProspectMode && (
+                                    <>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">發放日期 *</label>
+                                                <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">物資種類 *</label>
+                                                {!isAddingCategory ? (
+                                                    <div className="flex space-x-1 items-center">
+                                                        <select value={itemType} onChange={e => setItemType(e.target.value)} className="flex-1 min-w-0 w-full glass-input px-2 py-3 rounded-xl">
+                                                            {categories.map(cat => (
+                                                                <option key={cat.id} value={cat.name} className="text-black">{cat.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        {canEdit && (
+                                                            <button type="button" onClick={() => setIsAddingCategory(true)} className="shrink-0 p-2.5 glass-input rounded-xl text-slate-400 hover:text-white transition-colors" title="新增種類">
+                                                                <Plus className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                        {isAdmin && itemType !== "面紙" && itemType !== "扇子" && (
+                                                            <button type="button" onClick={() => { const cat = categories.find(c => c.name === itemType); if (cat) handleDeleteCategory(cat.id); }} className="shrink-0 p-2.5 glass-input rounded-xl text-red-400 hover:text-red-300 transition-colors" title="刪除種類">
+                                                                <Trash2 className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex space-x-2">
+                                                        <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="輸入新物資名稱" className="flex-1 glass-input px-4 py-3 rounded-xl" autoFocus />
+                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-4 bg-purple-500 hover:bg-purple-400 rounded-xl text-white font-bold transition-colors">
+                                                            儲存
+                                                        </button>
+                                                        <button type="button" onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }} className="px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white transition-colors">
+                                                            取消
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
-                                        ) : (
-                                            <div className="flex space-x-2">
-                                                <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="輸入新物資名稱" className="flex-1 glass-input px-4 py-3 rounded-xl" autoFocus />
-                                                <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-4 bg-purple-500 hover:bg-purple-400 rounded-xl text-white font-bold transition-colors">
-                                                    儲存
-                                                </button>
-                                                <button type="button" onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }} className="px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white transition-colors">
-                                                    取消
-                                                </button>
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">本次發放數量 *</label>
+                                                <div className="relative">
+                                                    <input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl pl-10" />
+                                                    <Box className="w-5 h-5 absolute left-3 top-3.5 text-slate-400" />
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">本次發放數量 *</label>
-                                        <div className="relative">
-                                            <input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl pl-10" />
-                                            <Box className="w-5 h-5 absolute left-3 top-3.5 text-slate-400" />
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">下次聯絡日期 *</label>
-                                    <input type="date" value={nextContactDate} onChange={e => setNextContactDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
-                                    <label className="flex items-center space-x-2 mt-2 cursor-pointer select-none">
-                                        <input type="checkbox" checked={addToCalendar} onChange={e => setAddToCalendar(e.target.checked)} className="w-4 h-4 rounded accent-purple-500" />
-                                        <span className="text-sm text-slate-300">📅 建立 Google Calendar 提醒活動</span>
-                                    </label>
-                                </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-300 mb-1.5 block">下次聯絡日期 *</label>
+                                            <input type="date" value={nextContactDate} onChange={e => setNextContactDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
+                                            <label className="flex items-center space-x-2 mt-2 cursor-pointer select-none">
+                                                <input type="checkbox" checked={addToCalendar} onChange={e => setAddToCalendar(e.target.checked)} className="w-4 h-4 rounded accent-purple-500" />
+                                                <span className="text-sm text-slate-300">📅 建立 Google Calendar 提醒活動</span>
+                                            </label>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className="pt-4 flex space-x-3">
                                     <button type="button" onClick={() => setIsAddingNew(false)} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
-                                    <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition shadow-lg shadow-purple-500/20">建立據點並儲存</button>
+                                    <button type="submit" className={`flex-1 py-3 px-4 rounded-xl font-medium text-white transition shadow-lg ${isProspectMode ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-500/20' : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-purple-500/20'}`}>
+                                        {isProspectMode ? '🎯 建立待開發商家' : '建立據點並儲存'}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -830,52 +846,6 @@ export default function DashboardClient() {
                                 </form>
                             )}
 
-                        </div>
-                    </div>
-                )}
-
-                {/* 新增待開發商家 Modal */}
-                {isAddingProspect && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="glass-panel w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-fade-in-up">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold flex items-center text-red-400"><MapPin className="mr-2" /> 新增待開發商家</h2>
-                                <button onClick={() => { setIsAddingProspect(false); resetForm(); }} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
-                            </div>
-
-                            <form onSubmit={(e) => submitNewLocation(e, "PROSPECT")} className="space-y-4">
-                                <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">商家名稱 *</label>
-                                    <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：全家松山店" required className="w-full glass-input px-4 py-3 rounded-xl" />
-                                </div>
-
-                                <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">搜尋並選擇地點 *</label>
-                                    <AddressInput onPlaceSelected={handlePlaceSelected} placeholder="請輸入商家地址" />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名</label>
-                                        <input type="text" value={contactName} onChange={e => setContactName(e.target.value)} placeholder="王小明" className="w-full glass-input px-4 py-3 rounded-xl" />
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話</label>
-                                        <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="09XX-XXX-XXX" className="w-full glass-input px-4 py-3 rounded-xl" />
-                                    </div>
-                                </div>
-
-                                {newLat && newLng && (
-                                    <div className="text-xs text-green-400 bg-green-400/10 p-2 rounded-lg border border-green-400/20">
-                                        ✅ 已鎖定座標：{newLat.toFixed(5)}, {newLng.toFixed(5)}
-                                    </div>
-                                )}
-
-                                <div className="pt-4 flex space-x-3">
-                                    <button type="button" onClick={() => { setIsAddingProspect(false); resetForm(); }} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
-                                    <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 transition shadow-lg shadow-red-500/20">建立待開發商家</button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 )}
