@@ -21,6 +21,7 @@ export default function DashboardClient() {
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === "ADMIN";
     const canEdit = isAdmin || (session?.user as any)?.role === "EDITOR";
+    const isLoggedIn = !!session?.user; // 所有登入用戶
 
     // 計算兩周後日期的輔助函式
     const getTwoWeeksLater = () => {
@@ -552,7 +553,7 @@ export default function DashboardClient() {
                                                 </div>
                                             )}
                                         </div>
-                                        {canEdit && (
+                                        {isLoggedIn && (
                                             <div className="flex items-center gap-1 ml-2 shrink-0">
                                                 <button
                                                     onClick={(e) => openEditModal(e, loc)}
