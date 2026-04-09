@@ -432,7 +432,15 @@ export default function DashboardClient() {
             
             const totalQuantity = loc.records?.reduce((acc, r) => acc + r.quantity, 0) || 0;
 
-            return {
+            const itemQuantities: Record<string, number> = {};
+            if (loc.records) {
+                loc.records.forEach(r => {
+                    const item = (r as any).itemType || "面紙";
+                    itemQuantities[item] = (itemQuantities[item] || 0) + r.quantity;
+                });
+            }
+
+            const rowData: any = {
                 "種類": typeStr,
                 "名稱": (loc as any).name || "",
                 "地址": loc.address || "",
@@ -440,12 +448,21 @@ export default function DashboardClient() {
                 "經度": loc.longitude,
                 "聯絡人": (loc as any).contactName || "",
                 "電話": loc.contactPhone || "",
-                "總發放量(盒)": totalQuantity,
-                "下次聯絡日": loc.nextContactDate ? new Date(loc.nextContactDate).toLocaleDateString() : "",
-                "最後更新時間": new Date(loc.updatedAt).toLocaleString()
+                "總發放量": totalQuantity,
             };
+
+            // 展開各項物資，加上前綴確保欄位可見
+            Object.entries(itemQuantities).forEach(([item, qty]) => {
+                rowData[`細項-${item}`] = qty;
+            });
+
+            rowData["下次聯絡日"] = loc.nextContactDate ? new Date(loc.nextContactDate).toLocaleDateString() : "";
+            rowData["最後更新時間"] = new Date(loc.updatedAt).toLocaleString();
+
+            return rowData;
         });
 
+        // 取出所有可能的細項欄位並做排序，確保 JSON 匯出時的穩定性
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "據點資料");
