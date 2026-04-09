@@ -60,7 +60,6 @@ export default function DashboardClient() {
     const [recordNextContactDate, setRecordNextContactDate] = useState("");
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
-    const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
     const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 清單過濾狀態
     const [isProspectMode, setIsProspectMode] = useState(false); // 建立據點時，是否為待開發商家
 
@@ -457,12 +456,12 @@ export default function DashboardClient() {
         <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100 pt-16">
 
             {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden relative">
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
                 {/* Background Blobs */}
                 <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
 
-                {/* Sidebar List */}
-                <div className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel border-r border-white/10 z-10 shrink-0 h-full`}>
+                {/* Sidebar List (Mobile: Bottom half, Desktop: Left panel) */}
+                <div className="flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel md:border-r border-t md:border-t-0 border-white/10 z-10 shrink-0 flex-1 md:h-full order-2 md:order-1 overflow-hidden">
                     <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
                         {canEdit && (
                             <div className="flex flex-col space-y-2">
@@ -750,29 +749,13 @@ export default function DashboardClient() {
                     </div>
                 </div>
 
-                {/* Map Area */}
-                <div className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block flex-1 relative p-4`}>
+                {/* Map Area (Mobile: Top half, Desktop: Right panel) */}
+                <div className="flex-none h-[45vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
                     <Map
                         locations={locations}
                         selectedLocationId={selectedLocId}
                         onSelectMarker={setSelectedLocId}
                     />
-                </div>
-
-                {/* 手機版切換按鈕 */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 md:hidden flex p-1.5 rounded-full bg-slate-800/90 backdrop-blur-md shadow-2xl border border-white/10">
-                    <button
-                        onClick={() => setMobileView('map')}
-                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${mobileView === 'map' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        地圖
-                    </button>
-                    <button
-                        onClick={() => setMobileView('list')}
-                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${mobileView === 'list' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        列表
-                    </button>
                 </div>
 
                 {/* 新增地點 Modal */}
