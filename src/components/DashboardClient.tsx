@@ -750,7 +750,7 @@ export default function DashboardClient() {
                 </div>
 
                 {/* Map Area (Mobile: Top half, Desktop: Right panel) */}
-                <div className="flex-none h-[40vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
+                <div className="flex-none h-[30vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
                     <Map
                         locations={locations}
                         selectedLocationId={selectedLocId}
