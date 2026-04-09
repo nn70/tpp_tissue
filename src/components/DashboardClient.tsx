@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
-import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon } from "lucide-react";
+import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon, Pencil } from "lucide-react";
 import exifr from 'exifr';
 import imageCompression from 'browser-image-compression';
 import { Location, DistributionRecord } from "@prisma/client";
@@ -61,6 +61,14 @@ export default function DashboardClient() {
     const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
     const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 清單過濾狀態
     const [isProspectMode, setIsProspectMode] = useState(false); // 建立據點時，是否為待開發商家
+
+    // 編輯地點狀態
+    const [editingLocId, setEditingLocId] = useState<string | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editContactName, setEditContactName] = useState("");
+    const [editContactPhone, setEditContactPhone] = useState("");
+    const [editIsProspect, setEditIsProspect] = useState(false);
+    const [editOriginalType, setEditOriginalType] = useState(""); // 記錄原始 type，用於判斷是否為 Billboard
 
     // 新增種類狀態
     const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -349,6 +357,55 @@ export default function DashboardClient() {
         }
     };
 
+    // 開啟編輯彈窗
+    const openEditModal = (e: React.MouseEvent, loc: LocationWithRecords) => {
+        e.stopPropagation();
+        setEditingLocId(loc.id);
+        setEditName((loc as any).name || "");
+        setEditContactName((loc as any).contactName || "");
+        setEditContactPhone(loc.contactPhone || "");
+        setEditIsProspect((loc as any).type === 'PROSPECT');
+        setEditOriginalType((loc as any).type || 'SUPPLY');
+    };
+
+    // 傳送編輯
+    const handleUpdateLocation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingLocId) return;
+
+        // 判斷最終 type：Billboard 不能被改
+        let newType: string;
+        if (editOriginalType === 'BILLBOARD') {
+            newType = 'BILLBOARD'; // 看板不能透過此彈窗改療型
+        } else {
+            newType = editIsProspect ? 'PROSPECT' : 'SUPPLY';
+        }
+
+        try {
+            const res = await fetch(`/api/locations/${editingLocId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editName,
+                    contactName: editContactName,
+                    contactPhone: editContactPhone,
+                    type: newType,
+                }),
+            });
+
+            if (res.ok) {
+                setEditingLocId(null);
+                fetchLocations();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(`更新失敗：${err.error || '未知錯誤'}`);
+            }
+        } catch (error) {
+            alert("系統錯誤");
+        }
+    };
+
+
     const handleDeleteRecord = async (e: React.MouseEvent, locationId: string, recordId: string) => {
         e.stopPropagation();
         if (!confirm("確定要刪除這筆發放紀錄嗎？此動作無法復原。")) return;
@@ -495,13 +552,25 @@ export default function DashboardClient() {
                                                 </div>
                                             )}
                                         </div>
-                                        {isAdmin && (
-                                            <button
-                                                onClick={(e) => handleDeleteLocation(e, loc.id)}
-                                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors ml-2 shrink-0"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                        {canEdit && (
+                                            <div className="flex items-center gap-1 ml-2 shrink-0">
+                                                <button
+                                                    onClick={(e) => openEditModal(e, loc)}
+                                                    className="p-1.5 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                                                    title="編輯"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={(e) => handleDeleteLocation(e, loc.id)}
+                                                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                        title="刪除"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
 
@@ -851,5 +920,75 @@ export default function DashboardClient() {
                 )}
             </div>
         </div>
+
+        {/* 編輯地點 Modal */}
+        {editingLocId && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setEditingLocId(null)}>
+                <div className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fade-in-up" onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold flex items-center">
+                            <Pencil className="mr-2 w-5 h-5 text-blue-400" /> 編輯地點資料
+                        </h2>
+                        <button onClick={() => setEditingLocId(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
+                    </div>
+
+                    <form onSubmit={handleUpdateLocation} className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium text-slate-300 mb-1.5 block">地點／商家名稱</label>
+                            <input
+                                type="text"
+                                value={editName}
+                                onChange={e => setEditName(e.target.value)}
+                                placeholder="地點名稱"
+                                className="w-full glass-input px-4 py-3 rounded-xl"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名</label>
+                                <input
+                                    type="text"
+                                    value={editContactName}
+                                    onChange={e => setEditContactName(e.target.value)}
+                                    placeholder="王小明"
+                                    className="w-full glass-input px-4 py-3 rounded-xl"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話</label>
+                                <input
+                                    type="tel"
+                                    value={editContactPhone}
+                                    onChange={e => setEditContactPhone(e.target.value)}
+                                    placeholder="09XX-XXX-XXX"
+                                    className="w-full glass-input px-4 py-3 rounded-xl"
+                                />
+                            </div>
+                        </div>
+
+                        {/* 看板不顯示待開發選項 */}
+                        {editOriginalType !== 'BILLBOARD' && (
+                            <label className={`flex items-center space-x-3 cursor-pointer select-none p-3 rounded-xl border transition-all ${editIsProspect ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={editIsProspect}
+                                    onChange={e => setEditIsProspect(e.target.checked)}
+                                    className="w-4 h-4 rounded accent-red-500"
+                                />
+                                <span className={`text-sm font-medium ${editIsProspect ? 'text-red-300' : 'text-slate-300'}`}>
+                                    {editIsProspect ? '🎯 待開發商家（取消勾選即變北正據點）' : '✅ 已發放據點'}
+                                </span>
+                            </label>
+                        )}
+
+                        <div className="pt-2 flex space-x-3">
+                            <button type="button" onClick={() => setEditingLocId(null)} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
+                            <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition shadow-lg shadow-blue-500/20">儲存變更</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
     );
 }
