@@ -920,76 +920,76 @@ export default function DashboardClient() {
                     </div>
                 )}
             </div>
-        </div>
 
-        {/* 編輯地點 Modal */}
-        {editingLocId && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setEditingLocId(null)}>
-                <div className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fade-in-up" onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold flex items-center">
-                            <Pencil className="mr-2 w-5 h-5 text-blue-400" /> 編輯地點資料
-                        </h2>
-                        <button onClick={() => setEditingLocId(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
-                    </div>
-
-                    <form onSubmit={handleUpdateLocation} className="space-y-4">
-                        <div>
-                            <label className="text-sm font-medium text-slate-300 mb-1.5 block">地點／商家名稱</label>
-                            <input
-                                type="text"
-                                value={editName}
-                                onChange={e => setEditName(e.target.value)}
-                                placeholder="地點名稱"
-                                className="w-full glass-input px-4 py-3 rounded-xl"
-                            />
+            {/* 編輯地點 Modal */}
+            {editingLocId && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setEditingLocId(null)}>
+                    <div className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fade-in-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold flex items-center">
+                                <Pencil className="mr-2 w-5 h-5 text-blue-400" /> 編輯地點資料
+                            </h2>
+                            <button onClick={() => setEditingLocId(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleUpdateLocation} className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名</label>
+                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">地點／商家名稱</label>
                                 <input
                                     type="text"
-                                    value={editContactName}
-                                    onChange={e => setEditContactName(e.target.value)}
-                                    placeholder="王小明"
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    placeholder="地點名稱"
                                     className="w-full glass-input px-4 py-3 rounded-xl"
                                 />
                             </div>
-                            <div>
-                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話</label>
-                                <input
-                                    type="tel"
-                                    value={editContactPhone}
-                                    onChange={e => setEditContactPhone(e.target.value)}
-                                    placeholder="09XX-XXX-XXX"
-                                    className="w-full glass-input px-4 py-3 rounded-xl"
-                                />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡人姓名</label>
+                                    <input
+                                        type="text"
+                                        value={editContactName}
+                                        onChange={e => setEditContactName(e.target.value)}
+                                        placeholder="王小明"
+                                        className="w-full glass-input px-4 py-3 rounded-xl"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">聯絡電話</label>
+                                    <input
+                                        type="tel"
+                                        value={editContactPhone}
+                                        onChange={e => setEditContactPhone(e.target.value)}
+                                        placeholder="09XX-XXX-XXX"
+                                        className="w-full glass-input px-4 py-3 rounded-xl"
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* 看板不顯示待開發選項 */}
-                        {editOriginalType !== 'BILLBOARD' && (
-                            <label className={`flex items-center space-x-3 cursor-pointer select-none p-3 rounded-xl border transition-all ${editIsProspect ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={editIsProspect}
-                                    onChange={e => setEditIsProspect(e.target.checked)}
-                                    className="w-4 h-4 rounded accent-red-500"
-                                />
-                                <span className={`text-sm font-medium ${editIsProspect ? 'text-red-300' : 'text-slate-300'}`}>
-                                    {editIsProspect ? '🎯 待開發商家（取消勾選即變北正據點）' : '✅ 已發放據點'}
-                                </span>
-                            </label>
-                        )}
+                            {/* 看板不顯示待開發選項 */}
+                            {editOriginalType !== 'BILLBOARD' && (
+                                <label className={`flex items-center space-x-3 cursor-pointer select-none p-3 rounded-xl border transition-all ${editIsProspect ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={editIsProspect}
+                                        onChange={e => setEditIsProspect(e.target.checked)}
+                                        className="w-4 h-4 rounded accent-red-500"
+                                    />
+                                    <span className={`text-sm font-medium ${editIsProspect ? 'text-red-300' : 'text-slate-300'}`}>
+                                        {editIsProspect ? '🎯 待開發商家（取消勾選即變北正據點）' : '✅ 已發放據點'}
+                                    </span>
+                                </label>
+                            )}
 
-                        <div className="pt-2 flex space-x-3">
-                            <button type="button" onClick={() => setEditingLocId(null)} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
-                            <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition shadow-lg shadow-blue-500/20">儲存變更</button>
-                        </div>
-                    </form>
+                            <div className="pt-2 flex space-x-3">
+                                <button type="button" onClick={() => setEditingLocId(null)} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
+                                <button type="submit" className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition shadow-lg shadow-blue-500/20">儲存變更</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        )}
+            )}
+        </div>
     );
 }
