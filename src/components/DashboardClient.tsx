@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Map from "@/components/Map";
 import AddressInput from "@/components/AddressInput";
 import { Plus, MapPin, Calendar, Box, Loader2, Phone, User, ArrowUpDown, Trash2, Camera, MapIcon, Pencil, Download } from "lucide-react";
@@ -11,6 +11,16 @@ import { Location, DistributionRecord } from "@prisma/client";
 import { useSession } from "next-auth/react";
 
 type LocationWithRecords = Location & { records: DistributionRecord[] };
+
+const ZONES = [
+    { label: '全區', districts: [] },
+    { label: '北投、士林區', districts: ['北投區', '士林區'] },
+    { label: '內湖、南港區', districts: ['內湖區', '南港區'] },
+    { label: '松山、信義區', districts: ['松山區', '信義區'] },
+    { label: '中山、大同區', districts: ['中山區', '大同區'] },
+    { label: '中正、萬華區', districts: ['中正區', '萬華區'] },
+    { label: '大安、文山區', districts: ['大安區', '文山區'] }
+];
 
 export default function DashboardClient() {
     const [locations, setLocations] = useState<LocationWithRecords[]>([]);
@@ -61,6 +71,7 @@ export default function DashboardClient() {
     const [recordAddToCalendar, setRecordAddToCalendar] = useState(true);
 
     const [filterType, setFilterType] = useState<'ALL' | 'SUPPLY' | 'BILLBOARD' | 'PROSPECT'>('ALL'); // 清單過濾狀態
+    const [filterZone, setFilterZone] = useState('全區'); // 區域過濾狀態
     const [isProspectMode, setIsProspectMode] = useState(false); // 建立據點時，是否為待開發商家
 
     // 編輯地點狀態
@@ -469,6 +480,32 @@ export default function DashboardClient() {
         XLSX.writeFile(workbook, "店家看板資料_匯出.xlsx");
     };
 
+    const filteredAndSortedLocations = useMemo(() => {
+        return [...locations].filter(loc => {
+            if (filterType !== 'ALL') {
+                const t = (loc as any).type || 'SUPPLY';
+                if (t !== filterType) return false;
+            }
+            if (filterZone !== '全區') {
+                const zone = ZONES.find(z => z.label === filterZone);
+                if (zone && !zone.districts.some(d => loc.address && loc.address.includes(d))) {
+                    return false;
+                }
+            }
+            return true;
+        }).sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === 'lastDate') {
+                const aDate = a.records.length > 0 ? new Date(a.records[0].date).getTime() : 0;
+                const bDate = b.records.length > 0 ? new Date(b.records[0].date).getTime() : 0;
+                comparison = bDate - aDate;
+            } else {
+                comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            }
+            return sortOrder === 'desc' ? comparison : -comparison;
+        });
+    }, [locations, filterType, filterZone, sortBy, sortOrder]);
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100 pt-16">
 
@@ -550,6 +587,19 @@ export default function DashboardClient() {
                                 className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'PROSPECT' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
                             >🎯 待開發</button>
                         </div>
+                        
+                        {/* 區域篩選按鈕區 */}
+                        <div className="flex overflow-x-auto bg-black/20 rounded-xl p-1 gap-1 custom-scrollbar shrink-0">
+                            {ZONES.map(z => (
+                                <button
+                                    key={z.label}
+                                    onClick={() => setFilterZone(z.label)}
+                                    className={`shrink-0 text-xs py-1.5 px-3 rounded-lg transition-all whitespace-nowrap ${filterZone === z.label ? 'bg-orange-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                                >
+                                    {z.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -557,28 +607,14 @@ export default function DashboardClient() {
                             <div className="flex justify-center items-center h-40">
                                 <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
                             </div>
-                        ) : locations.length === 0 ? (
+                        ) : filteredAndSortedLocations.length === 0 ? (
                             <div className="text-center text-slate-400 mt-10 p-6 glass-panel rounded-2xl">
                                 <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                <p>尚無任何發放紀錄</p>
-                                <p className="text-sm mt-1 opacity-70">點擊上方按鈕建立第一筆資料</p>
+                                <p>尚無符合條件的發放紀錄</p>
+                                <p className="text-sm mt-1 opacity-70">可嘗試更換過濾條件或點擊上方按鈕建立新資料</p>
                             </div>
                         ) : (
-                            [...locations].filter(loc => {
-                                if (filterType === 'ALL') return true;
-                                const t = (loc as any).type || 'SUPPLY';
-                                return t === filterType;
-                            }).sort((a, b) => {
-                                let comparison = 0;
-                                if (sortBy === 'lastDate') {
-                                    const aDate = a.records.length > 0 ? new Date(a.records[0].date).getTime() : 0;
-                                    const bDate = b.records.length > 0 ? new Date(b.records[0].date).getTime() : 0;
-                                    comparison = bDate - aDate;
-                                } else {
-                                    comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-                                }
-                                return sortOrder === 'desc' ? comparison : -comparison;
-                            }).map((loc) => (
+                            filteredAndSortedLocations.map((loc) => (
                                 <div
                                     key={loc.id}
                                     className={`bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:bg-white/10 ${selectedLocId === loc.id ? 'ring-2 ring-purple-500 bg-white/10 shadow-lg shadow-purple-500/20' : ''}`}
@@ -769,7 +805,7 @@ export default function DashboardClient() {
                 {/* Map Area (Mobile: Top half, Desktop: Right panel) */}
                 <div className="flex-none h-[30vh] md:h-auto md:flex-1 relative p-2 md:p-4 order-1 md:order-2">
                     <Map
-                        locations={locations}
+                        locations={filteredAndSortedLocations}
                         selectedLocationId={selectedLocId}
                         onSelectMarker={setSelectedLocId}
                     />
