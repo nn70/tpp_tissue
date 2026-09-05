@@ -2,10 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { canManageContent } from "@/lib/permissions";
 
 export async function GET() {
 
     try {
+        const session = await getServerSession(authOptions);
+        if (!canManageContent(session)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const locations = await prisma.location.findMany({
             select: {
                 id: true,
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
 
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user || (session.user as any)?.role === "USER") {
+        if (!canManageContent(session)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { canManageContent } from "@/lib/permissions";
 
 interface RouteParams {
     params: Promise<{
@@ -14,7 +15,7 @@ export async function POST(request: Request, props: RouteParams) {
 
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user || (session.user as any)?.role === "USER") {
+        if (!canManageContent(session)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

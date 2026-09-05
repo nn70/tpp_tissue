@@ -13,13 +13,13 @@ export default function LoginPage() {
                             <span className="text-white font-bold text-3xl">眾</span>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold mb-2">登入 TPP Hub 管理系統</h1>
+                    <h1 className="text-2xl font-bold mb-2">登入 TPP松信區志工報名系統</h1>
                     <p className="text-slate-400 text-sm">請使用您的 Google 帳號登入以存取系統功能</p>
                 </div>
 
                 <div className="pt-4 border-t border-white/5">
                     <button
-                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                        onClick={() => signIn("google", { callbackUrl: "/forum" })}
                         className="w-full flex items-center justify-center space-x-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3.5 px-4 rounded-xl transition-all duration-200"
                     >
                         <LogIn className="w-5 h-5 text-slate-700" />

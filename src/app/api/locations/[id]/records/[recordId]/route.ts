@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { canManageContent } from "@/lib/permissions";
 
 interface RouteParams {
     params: Promise<{
@@ -13,7 +14,7 @@ interface RouteParams {
 export async function DELETE(request: Request, props: RouteParams) {
     const session = await getServerSession(authOptions);
 
-    if ((session?.user as any)?.role !== "ADMIN") {
+    if (!canManageContent(session)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

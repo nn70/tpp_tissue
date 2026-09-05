@@ -1,18 +1,14 @@
-"use client";
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { canManageContent } from "@/lib/permissions";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export default async function Home() {
+  const session = await getServerSession(authOptions);
 
-export default function Home() {
-  const router = useRouter();
+  if (canManageContent(session)) {
+    redirect("/dashboard");
+  }
 
-  useEffect(() => {
-    router.push("/dashboard");
-  }, [router]);
-
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-white/50">正在載入...</p>
-    </main>
-  );
+  redirect("/forum");
 }

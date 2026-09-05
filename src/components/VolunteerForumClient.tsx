@@ -78,7 +78,7 @@ export default function VolunteerForumClient() {
                 return;
             }
 
-            setMessage("報名成功，後台已可追蹤你的參與紀錄。");
+            setMessage("報名成功，後台已記錄你的參與資料。");
             askToAddGoogleCalendar(event);
             await fetchEvents();
         } finally {

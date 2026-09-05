@@ -26,27 +26,29 @@ export default function Navigation() {
                         <div className="w-8 h-8 rounded-xl tpp-brand-mark">
                             <span className="text-white font-bold text-lg">眾</span>
                         </div>
-                        <span className="text-white font-bold text-xl tracking-wide hidden sm:block">
-                            TPP Hub
+                        <span className="text-white font-bold text-sm sm:text-base lg:text-lg tracking-wide hidden sm:block whitespace-nowrap">
+                            TPP松信區志工報名系統
                         </span>
                     </div>
 
                     <div className="flex space-x-1 sm:space-x-4 overflow-x-auto hide-scrollbar flex-1 px-2 mx-2">
-                        <Link
-                            href="/dashboard"
-                            className={`${baseLinkClass} ${isDashboard ? activeLinkClass : inactiveLinkClass}`}
-                        >
-                            <Map className="w-4 h-4" />
-                            <span className="hidden sm:inline">物資發放紀錄</span>
-                            <span className="sm:hidden">發放紀錄</span>
-                        </Link>
+                        {canManageContent && (
+                            <Link
+                                href="/dashboard"
+                                className={`${baseLinkClass} ${isDashboard ? activeLinkClass : inactiveLinkClass}`}
+                            >
+                                <Map className="w-4 h-4" />
+                                <span className="hidden sm:inline">物資發放紀錄</span>
+                                <span className="sm:hidden">發放紀錄</span>
+                            </Link>
+                        )}
 
                         <Link
                             href="/forum"
                             className={`${baseLinkClass} ${isForum ? activeLinkClass : inactiveLinkClass}`}
                         >
                             <Users className="w-4 h-4" />
-                            <span className="hidden sm:inline">志工報名系統(可追蹤)</span>
+                            <span className="hidden sm:inline">志工報名系統</span>
                             <span className="sm:hidden">報名系統</span>
                         </Link>
 

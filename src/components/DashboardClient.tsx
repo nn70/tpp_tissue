@@ -32,7 +32,6 @@ export default function DashboardClient() {
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === "ADMIN";
     const canEdit = isAdmin || (session?.user as any)?.role === "EDITOR";
-    const isLoggedIn = !!session?.user; // 所有登入用戶
 
     // 計算兩周後日期的輔助函式
     const getTwoWeeksLater = () => {
@@ -673,7 +672,7 @@ export default function DashboardClient() {
                                                 </div>
                                             )}
                                         </div>
-                                        {isLoggedIn && (
+                                        {canEdit && (
                                             <div className="flex items-center gap-1.5 ml-2 shrink-0">
                                                 <button
                                                     onClick={(e) => openEditModal(e, loc)}
@@ -738,7 +737,7 @@ export default function DashboardClient() {
                                                             </span>
                                                             <span className="text-[#61C5C7] flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
                                                                 +{(record as any).itemType} {record.quantity} <Box className="w-3.5 h-3.5 ml-1.5 opacity-70" />
-                                                                {isAdmin && (
+                                                                {canEdit && (
                                                                     <button
                                                                         onClick={(e) => handleDeleteRecord(e, loc.id, record.id)}
                                                                         className="ml-3 p-1 text-slate-500 hover:text-red-400 transition-colors"

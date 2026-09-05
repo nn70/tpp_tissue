@@ -86,7 +86,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
             const data = await res.json();
             setRegistration(data);
             setRegistrationCount((count) => count + (isRegistered ? 0 : 1));
-            setMessage("報名成功，後台已可追蹤你的參與紀錄。");
+            setMessage("報名成功，後台已記錄你的參與資料。");
             askToAddGoogleCalendar(event);
         } finally {
             setSaving(false);
