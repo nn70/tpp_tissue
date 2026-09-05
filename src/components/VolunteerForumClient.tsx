@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, Save, User, UserCheck, Users } from "lucide-react";
-import { askToAddGoogleCalendar } from "@/lib/calendar";
+import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import { getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 import { taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
@@ -47,8 +47,12 @@ type RewardProgress = {
     unlocked: { times: number; title: string; description: string }[];
 };
 
+const EVENTS_PER_PAGE = 15;
+
 export default function VolunteerForumClient() {
     const [events, setEvents] = useState<VolunteerEvent[]>([]);
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+    const [visibleCount, setVisibleCount] = useState(EVENTS_PER_PAGE);
     const [rewardProgress, setRewardProgress] = useState<RewardProgress | null>(null);
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
@@ -90,10 +94,25 @@ export default function VolunteerForumClient() {
         fetchEvents();
     }, []);
 
+    useEffect(() => {
+        setVisibleCount(EVENTS_PER_PAGE);
+    }, [sortOrder, events.length]);
+
+    const sortedEvents = useMemo(() => {
+        return [...events].sort((a, b) => {
+            const aTime = new Date(a.startsAt).getTime();
+            const bTime = new Date(b.startsAt).getTime();
+            return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
+        });
+    }, [events, sortOrder]);
+
+    const visibleEvents = useMemo(() => sortedEvents.slice(0, visibleCount), [sortedEvents, visibleCount]);
+
     const nextEvent = useMemo(() => {
-        return events.find((event) => new Date(event.startsAt).getTime() >= Date.now()) ?? events[0] ?? null;
-    }, [events]);
+        return sortedEvents.find((event) => new Date(event.startsAt).getTime() >= Date.now()) ?? sortedEvents[0] ?? null;
+    }, [sortedEvents]);
     const profileChanged = name.trim() !== savedName.trim() || phone.trim() !== savedPhone.trim();
+    const hasSavedProfile = Boolean(savedName.trim() && savedPhone.trim());
 
     const saveProfile = async () => {
         setProfileSaving(true);
@@ -169,7 +188,6 @@ export default function VolunteerForumClient() {
 
             const data = await res.json();
             setMessage(data.status === "WAITLISTED" ? "候補報名成功，若有名額釋出會由主辦方通知。" : "報名成功，後台已記錄你的參與資料。");
-            askToAddGoogleCalendar(event);
             await fetchEvents();
         } finally {
             setSavingId(null);
@@ -204,6 +222,62 @@ export default function VolunteerForumClient() {
         }).format(new Date(value));
     };
 
+    const buildGoogleMapsUrl = (event: Pick<VolunteerEvent, "location" | "mapUrl">) => {
+        const directMapUrl = event.mapUrl?.trim();
+        if (directMapUrl) {
+            return directMapUrl;
+        }
+
+        return event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` : null;
+    };
+
+    const profileSection = (
+        <section className="glass-panel rounded-2xl p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                        <Phone className="w-4 h-4 text-[#61C5C7]" />
+                        志工個人資料
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                        第一次報名請留下姓名與電話，之後系統會自動帶出。
+                    </p>
+                </div>
+                <div className="grid w-full gap-2 sm:max-w-2xl sm:grid-cols-[1fr_1fr_auto]">
+                    <label className="relative min-w-0">
+                        <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="請輸入姓名"
+                            className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
+                        />
+                    </label>
+                    <label className="relative min-w-0">
+                        <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
+                        <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="請輸入手機或聯絡電話"
+                            className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
+                        />
+                    </label>
+                    <button
+                        type="button"
+                        onClick={saveProfile}
+                        disabled={profileSaving || !profileChanged}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button px-4 py-3 text-sm font-semibold disabled:opacity-50"
+                    >
+                        {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        儲存資料
+                    </button>
+                </div>
+            </div>
+        </section>
+    );
+
     return (
         <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto space-y-6 pb-10">
@@ -216,63 +290,37 @@ export default function VolunteerForumClient() {
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
-                                <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                                <a
+                                    href={buildGoogleCalendarUrl(nextEvent)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 transition hover:bg-white/10 hover:text-white"
+                                >
                                     <CalendarDays className="w-4 h-4 text-[#61C5C7]" />
                                     下一場：{formatDateTime(nextEvent.startsAt)}
-                                </span>
-                                <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-                                    <MapPin className="w-4 h-4 text-[#61C5C7]" />
-                                    {nextEvent.location || "線上活動"}
-                                </span>
+                                </a>
+                                {buildGoogleMapsUrl(nextEvent) ? (
+                                    <a
+                                        href={buildGoogleMapsUrl(nextEvent) ?? undefined}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 transition hover:bg-white/10 hover:text-white"
+                                    >
+                                        <MapPin className="w-4 h-4 text-[#61C5C7]" />
+                                        {nextEvent.location || "線上活動"}
+                                    </a>
+                                ) : (
+                                    <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                                        <MapPin className="w-4 h-4 text-[#61C5C7]" />
+                                        線上活動
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
                 </section>
 
-                <section className="glass-panel rounded-2xl p-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                                <Phone className="w-4 h-4 text-[#61C5C7]" />
-                                志工個人資料
-                            </div>
-                            <p className="mt-1 text-xs leading-5 text-slate-400">
-                                第一次報名請留下姓名與電話，之後系統會自動帶出。
-                            </p>
-                        </div>
-                        <div className="grid w-full gap-2 sm:max-w-2xl sm:grid-cols-[1fr_1fr_auto]">
-                            <label className="relative min-w-0">
-                                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="請輸入姓名"
-                                    className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
-                                />
-                            </label>
-                            <label className="relative min-w-0">
-                                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="請輸入手機或聯絡電話"
-                                    className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
-                                />
-                            </label>
-                            <button
-                                type="button"
-                                onClick={saveProfile}
-                                disabled={profileSaving || !profileChanged}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button px-4 py-3 text-sm font-semibold disabled:opacity-50"
-                            >
-                                {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                儲存資料
-                            </button>
-                        </div>
-                    </div>
-                </section>
+                {!hasSavedProfile && profileSection}
 
                 {message && (
                     <div className="rounded-xl border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-4 py-3 text-[#D9FFFF]">
@@ -285,13 +333,34 @@ export default function VolunteerForumClient() {
                         <Loader2 className="w-6 h-6 animate-spin mr-2" />
                         載入活動中...
                     </div>
-                ) : events.length === 0 ? (
+                ) : sortedEvents.length === 0 ? (
                     <div className="glass-panel rounded-2xl p-10 text-center text-slate-400">
                         目前尚未開放志工活動。
                     </div>
                 ) : (
-                    <section className="grid md:grid-cols-2 gap-4">
-                        {events.map((event) => {
+                    <section className="space-y-4">
+                        <div className="flex flex-col gap-3 rounded-2xl border border-[#61C5C7]/20 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-lg font-bold text-white">活動列表</h2>
+                                <p className="mt-1 text-sm text-slate-400">
+                                    目前顯示 {visibleEvents.length} / {sortedEvents.length} 個活動
+                                </p>
+                            </div>
+                            <label className="flex items-center gap-3 text-sm text-slate-300">
+                                時間排序
+                                <select
+                                    value={sortOrder}
+                                    onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                                    className="glass-input rounded-xl px-3 py-2"
+                                >
+                                    <option value="asc" className="bg-[#173246] text-white">由近到遠</option>
+                                    <option value="desc" className="bg-[#173246] text-white">由遠到近</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                        {visibleEvents.map((event) => {
                             const status = event.currentUserRegistration?.status;
                             const isWaitlisted = status === "WAITLISTED";
                             const isRegistered = status === "REGISTERED" || status === "ATTENDED" || isWaitlisted;
@@ -299,6 +368,7 @@ export default function VolunteerForumClient() {
                             const coverImageUrl = getVolunteerEventCoverImage(event);
                             const mapQuery = event.location || event.mapUrl;
                             const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
+                            const googleMapsUrl = buildGoogleMapsUrl(event);
 
                             return (
                                 <article key={event.id} className="glass-panel rounded-2xl p-5 space-y-4">
@@ -317,14 +387,31 @@ export default function VolunteerForumClient() {
                                             )}
                                             <h2 className="text-xl font-bold text-white">{event.title}</h2>
                                             <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-400">
-                                                <span className="inline-flex items-center gap-1.5">
+                                                <a
+                                                    href={buildGoogleCalendarUrl(event)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 rounded-lg px-1 transition hover:text-white"
+                                                >
                                                     <CalendarDays className="w-4 h-4" />
                                                     {formatDateTime(event.startsAt)}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    <MapPin className="w-4 h-4" />
-                                                    {event.location || "線上活動"}
-                                                </span>
+                                                </a>
+                                                {googleMapsUrl ? (
+                                                    <a
+                                                        href={googleMapsUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 rounded-lg px-1 transition hover:text-white"
+                                                    >
+                                                        <MapPin className="w-4 h-4" />
+                                                        {event.location || "線上活動"}
+                                                    </a>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <MapPin className="w-4 h-4" />
+                                                        線上活動
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         {status === "ATTENDED" && <CheckCircle2 className="w-6 h-6 text-[#61C5C7] shrink-0" />}
@@ -429,6 +516,19 @@ export default function VolunteerForumClient() {
                                 </article>
                             );
                         })}
+                        </div>
+
+                        {visibleCount < sortedEvents.length && (
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleCount((count) => count + EVENTS_PER_PAGE)}
+                                    className="rounded-xl border border-[#61C5C7]/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                                >
+                                    顯示更多活動
+                                </button>
+                            </div>
+                        )}
                     </section>
                 )}
 
@@ -459,6 +559,8 @@ export default function VolunteerForumClient() {
                         里程碑僅作為志工服務紀錄、感謝與活動安排參考；所有內容皆須符合選罷法，不得作為投票或助選行為之對價。
                     </p>
                 </section>
+
+                {hasSavedProfile && profileSection}
             </div>
         </main>
     );

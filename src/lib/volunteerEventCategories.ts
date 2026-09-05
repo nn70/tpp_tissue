@@ -19,6 +19,14 @@ export const VOLUNTEER_EVENT_CATEGORIES = [
         label: "輔選",
         imageUrl: "/event-category-defaults/campaign.jpg",
     },
+    {
+        label: "做手工",
+        imageUrl: "/event-category-defaults/craft.png",
+    },
+    {
+        label: "其他",
+        imageUrl: "/event-category-defaults/other.png",
+    },
 ] as const;
 
 export type VolunteerEventCategory = typeof VOLUNTEER_EVENT_CATEGORIES[number]["label"];

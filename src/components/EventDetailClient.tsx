@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, User, UserCheck } from "lucide-react";
-import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
+import { buildGoogleCalendarUrl } from "@/lib/calendar";
 import { getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 import { taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
@@ -128,7 +128,6 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                 setWaitlistCount((count) => count + 1);
             }
             setMessage(data.status === "WAITLISTED" ? "候補報名成功，若有名額釋出會由主辦方通知。" : "報名成功，後台已記錄你的參與資料。");
-            askToAddGoogleCalendar(event);
             const eventsRes = await fetch("/api/volunteer-events");
             if (eventsRes.ok) {
                 const eventsData = await eventsRes.json();
@@ -141,6 +140,9 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
             setSaving(false);
         }
     };
+
+    const googleMapsUrl = event.mapUrl?.trim()
+        || (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` : null);
 
     return (
         <main className="min-h-screen tpp-page pt-16">
@@ -176,7 +178,14 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                                 <CalendarDays className="w-4 h-4 text-[#61C5C7]" />
                                 日期時間
                             </div>
-                            <div className="font-semibold">{formatDateTime(event.startsAt)}</div>
+                            <a
+                                href={buildGoogleCalendarUrl(event)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex font-semibold text-white transition hover:text-[#D9FFFF]"
+                            >
+                                {formatDateTime(event.startsAt)}
+                            </a>
                             {event.endsAt && <div className="text-sm text-slate-400 mt-1">至 {formatDateTime(event.endsAt)}</div>}
                         </div>
 
@@ -185,7 +194,18 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                                 <MapPin className="w-4 h-4 text-[#61C5C7]" />
                                 活動地點
                             </div>
-                            <div className="font-semibold">{event.location || "線上活動"}</div>
+                            {googleMapsUrl ? (
+                                <a
+                                    href={googleMapsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex font-semibold text-white transition hover:text-[#D9FFFF]"
+                                >
+                                    {event.location || "線上活動"}
+                                </a>
+                            ) : (
+                                <div className="font-semibold">線上活動</div>
+                            )}
                         </div>
                     </div>
 
