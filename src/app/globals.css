@@ -20,21 +20,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #071820;
-    --foreground: #f7fbfb;
+    --background: #f7fbfb;
+    --foreground: #173246;
   }
 }
 
 @layer base {
   html {
-    background: #071820;
+    background: #f2ffff;
   }
 
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at top left, rgba(97, 197, 199, 0.16), transparent 34rem),
-      linear-gradient(135deg, #071820 0%, #102d3a 46%, #3b597d 100%);
+      radial-gradient(circle at top left, rgba(97, 197, 199, 0.28), transparent 34rem),
+      radial-gradient(circle at 85% 8%, rgba(59, 89, 125, 0.16), transparent 30rem),
+      linear-gradient(135deg, #fbffff 0%, #e4f8f8 45%, #dcecff 100%);
     color: var(--foreground);
     font-family: var(--font-sans), sans-serif;
   }
@@ -48,9 +49,9 @@
 @layer utilities {
   .glass-panel {
     @apply border shadow-2xl backdrop-blur-xl;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.055));
+    background: linear-gradient(180deg, rgba(11, 42, 52, 0.76), rgba(15, 54, 67, 0.66));
     border-color: var(--tpp-line);
-    box-shadow: 0 22px 60px rgba(3, 20, 27, 0.28);
+    box-shadow: 0 18px 44px rgba(23, 50, 70, 0.18);
   }
 
   .glass-input {
@@ -68,8 +69,9 @@
   .tpp-page {
     @apply min-h-screen text-slate-100;
     background:
-      radial-gradient(circle at 12% 0%, rgba(97, 197, 199, 0.16), transparent 30rem),
-      linear-gradient(135deg, #071820 0%, #102d3a 48%, #3b597d 100%);
+      radial-gradient(circle at 12% 0%, rgba(97, 197, 199, 0.3), transparent 30rem),
+      radial-gradient(circle at 90% 10%, rgba(59, 89, 125, 0.18), transparent 30rem),
+      linear-gradient(135deg, #fbffff 0%, #e4f8f8 46%, #dcecff 100%);
   }
 
   .tpp-primary-button {
