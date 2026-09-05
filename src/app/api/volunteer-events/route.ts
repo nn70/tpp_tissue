@@ -7,6 +7,22 @@ import { canManageContent } from "@/lib/permissions";
 import { getRewardProgress } from "@/lib/volunteerRewards";
 import { normalizeVolunteerEventCategory } from "@/lib/volunteerEventCategories";
 
+type EventRegistrationForList = {
+    id: string;
+    status: string;
+    userId: string;
+    createdAt: Date;
+    name: string | null;
+    note: string | null;
+    phone: string | null;
+    user: {
+        name: string | null;
+        email: string | null;
+        image: string | null;
+        phone: string | null;
+    };
+};
+
 export async function GET() {
     const session = await getServerSession(authOptions);
 
@@ -48,18 +64,36 @@ export async function GET() {
             status: "ATTENDED",
         },
     });
+    const visibleRegistrationStatuses = ["REGISTERED", "WAITLISTED", "ATTENDED"];
 
     return NextResponse.json({
-        events: events.map(({ checkInToken, ...event }) => ({
-            ...event,
-            currentUserRegistration: event.registrations.find((registration) => registration.userId === session.user.id) ?? null,
-            registrationCount: event.registrations.filter((registration) => (
-                registration.status === "REGISTERED" || registration.status === "ATTENDED"
-            )).length,
-            waitlistCount: event.registrations.filter((registration) => (registration.status as string) === "WAITLISTED").length,
-            checkInToken: manage ? checkInToken : undefined,
-            registrations: manage ? event.registrations : undefined,
-        })),
+        events: events.map(({ checkInToken, ...event }) => {
+            const registrations = event.registrations as unknown as EventRegistrationForList[];
+            const currentUserRegistration = registrations.find((registration) => registration.userId === session.user.id) ?? null;
+            const visibleRegistrations = registrations.filter((registration) => (
+                visibleRegistrationStatuses.includes(registration.status as string)
+            ));
+            const canSeeParticipants = manage || Boolean(currentUserRegistration && currentUserRegistration.status !== "CANCELLED");
+
+            return {
+                ...event,
+                currentUserRegistration,
+                registrationCount: registrations.filter((registration) => (
+                    registration.status === "REGISTERED" || registration.status === "ATTENDED"
+                )).length,
+                waitlistCount: registrations.filter((registration) => (registration.status as string) === "WAITLISTED").length,
+                checkInToken: manage ? checkInToken : undefined,
+                registrations: manage ? event.registrations : undefined,
+                participants: canSeeParticipants ? visibleRegistrations.map((registration) => ({
+                    id: registration.id,
+                    name: registration.name || registration.user.name || "未命名志工",
+                    status: registration.status,
+                    email: manage ? registration.user.email : undefined,
+                    phone: manage ? registration.phone || registration.user.phone : undefined,
+                    note: manage ? registration.note : undefined,
+                })) : undefined,
+            };
+        }),
         currentUserProfile: session.user.id
             ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, phone: true } })
             : null,

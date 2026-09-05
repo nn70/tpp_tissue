@@ -25,6 +25,9 @@ export default function LoginPage() {
                         <LogIn className="w-5 h-5 text-slate-700" />
                         <span>使用 Google 帳號登入</span>
                     </button>
+                    <p className="mt-4 text-xs leading-5 text-slate-400">
+                        登入即表示您同意我們的服務條款和隱私政策
+                    </p>
                 </div>
             </div>
         </div>

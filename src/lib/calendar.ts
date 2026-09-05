@@ -1,4 +1,5 @@
 type CalendarEvent = {
+    id: string;
     title: string;
     description: string | null;
     location: string | null;
@@ -26,9 +27,37 @@ export function buildGoogleCalendarUrl(event: CalendarEvent) {
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-export function askToAddGoogleCalendar(event: CalendarEvent) {
+export async function askToAddGoogleCalendar(event: CalendarEvent) {
     const shouldOpen = window.confirm("報名成功！要加入 Google Calendar 嗎？");
     if (shouldOpen) {
-        window.open(buildGoogleCalendarUrl(event), "_blank", "noopener,noreferrer");
+        const calendarWindow = window.open("about:blank", "_blank");
+        try {
+            const res = await fetch("/api/calendar/volunteer-events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventId: event.id }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.htmlLink) {
+                    if (calendarWindow) {
+                        calendarWindow.location.href = data.htmlLink;
+                    } else {
+                        window.open(data.htmlLink, "_blank", "noopener,noreferrer");
+                    }
+                }
+                return;
+            }
+        } catch (error) {
+            console.error("Error creating Google Calendar event:", error);
+        }
+
+        const fallbackUrl = buildGoogleCalendarUrl(event);
+        if (calendarWindow) {
+            calendarWindow.location.href = fallbackUrl;
+        } else {
+            window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+        }
     }
 }

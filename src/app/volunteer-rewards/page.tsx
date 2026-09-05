@@ -29,21 +29,23 @@ export default function VolunteerRewardsPage() {
                     </div>
                 </section>
 
-                <section className="grid gap-4 md:grid-cols-2">
+                <section className="grid gap-5 md:grid-cols-2">
                     {rewardMilestones.map((reward, index) => {
                         const Icon = rewardIcons[index] ?? Medal;
 
                         return (
-                            <article key={reward.times} className="glass-panel rounded-2xl p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                                        <Icon className="h-7 w-7 text-[#F4F7F7]" />
+                            <article key={reward.times} className="glass-panel overflow-hidden rounded-2xl transition hover:-translate-y-0.5 hover:shadow-xl">
+                                <div className="aspect-[16/10] overflow-hidden border-b border-[#61C5C7]/15 bg-[#fff8e8]">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={reward.imageUrl} alt={`${reward.title} 示意圖`} className="h-full w-full object-cover" />
+                                </div>
+                                <div className="p-6">
+                                    <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#61C5C7]/20 bg-[#61C5C7]/12">
+                                        <Icon className="h-6 w-6 text-[#2aa8ac]" />
                                     </div>
-                                    <div>
-                                        <div className="text-sm font-semibold text-slate-400">累積報到 {reward.times} 次</div>
-                                        <h2 className="mt-1 text-2xl font-black text-white">{reward.title}</h2>
-                                        <p className="mt-3 leading-7 text-slate-300">{reward.description}</p>
-                                    </div>
+                                    <div className="text-sm font-semibold text-slate-400">累積報到 {reward.times} 次</div>
+                                    <h2 className="mt-1 text-2xl font-black text-white">{reward.title}</h2>
+                                    <p className="mt-3 leading-7 text-slate-300">{reward.description}</p>
                                 </div>
                             </article>
                         );

@@ -2,8 +2,9 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Clock, Copy, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Clock, Copy, Edit3, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Save, Trash2, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 import { VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
@@ -87,6 +88,7 @@ const statusLabels: Record<RegistrationStatus, string> = {
 };
 
 export default function VolunteerAdminClient() {
+    const { data: session } = useSession();
     const [events, setEvents] = useState<AdminEvent[]>([]);
     const [volunteers, setVolunteers] = useState<VolunteerStats[]>([]);
     const [loading, setLoading] = useState(true);
@@ -94,6 +96,8 @@ export default function VolunteerAdminClient() {
     const [uploadingCover, setUploadingCover] = useState(false);
     const [isOnlineEvent, setIsOnlineEvent] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
+    const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
     const [qrEventId, setQrEventId] = useState<string | null>(null);
     const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
     const [expandedProfileUserId, setExpandedProfileUserId] = useState<string | null>(null);
@@ -110,6 +114,9 @@ export default function VolunteerAdminClient() {
         registrationDeadline: "",
         capacity: "",
     });
+    const [editForm, setEditForm] = useState<EventFormState>(form);
+    const [editIsOnlineEvent, setEditIsOnlineEvent] = useState(false);
+    const isCurrentUserAdmin = session?.user?.role === "ADMIN" || session?.user?.email?.toLowerCase() === "nn70nn70@gmail.com";
 
     const fetchAdminData = async () => {
         try {
@@ -283,6 +290,89 @@ export default function VolunteerAdminClient() {
         if (!url) return;
 
         await navigator.clipboard.writeText(url);
+    };
+
+    const toDateTimeInputValue = (value: string | null) => {
+        if (!value) return "";
+        const date = new Date(value);
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(0, 16);
+    };
+
+    const startEditingEvent = (event: AdminEvent) => {
+        setEditingEventId(event.id);
+        setEditIsOnlineEvent(!event.location);
+        setEditForm({
+            title: event.title,
+            slug: event.slug ?? "",
+            category: event.category ?? "",
+            description: event.description ?? "",
+            location: event.location ?? "",
+            mapUrl: event.mapUrl ?? "",
+            coverImageUrl: event.coverImageUrl ?? "",
+            startsAt: toDateTimeInputValue(event.startsAt),
+            endsAt: toDateTimeInputValue(event.endsAt),
+            registrationDeadline: toDateTimeInputValue(event.registrationDeadline),
+            capacity: event.capacity ? String(event.capacity) : "",
+        });
+    };
+
+    const handleEditPlaceSelected = (place: { address: string; lat: number; lng: number; placeId?: string }) => {
+        const query = encodeURIComponent(place.address);
+        const placeParam = place.placeId ? `&query_place_id=${encodeURIComponent(place.placeId)}` : "";
+
+        setEditForm((prev) => ({
+            ...prev,
+            location: place.address,
+            mapUrl: `https://www.google.com/maps/search/?api=1&query=${query}${placeParam}`,
+        }));
+    };
+
+    const updateEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingEventId) return;
+
+        setUpdatingId(editingEventId);
+        try {
+            const res = await fetch(`/api/volunteer-events/${editingEventId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...editForm,
+                    location: editIsOnlineEvent ? "" : editForm.location,
+                    mapUrl: editIsOnlineEvent ? "" : editForm.mapUrl,
+                    capacity: editForm.capacity ? Number(editForm.capacity) : null,
+                    endsAt: editForm.endsAt || null,
+                    isActive: true,
+                }),
+            });
+
+            if (res.ok) {
+                setEditingEventId(null);
+                await fetchAdminData();
+            } else {
+                alert("更新活動失敗，請確認必填欄位。");
+            }
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const deleteEvent = async (event: AdminEvent) => {
+        if (!confirm(`確定要刪除「${event.title}」？此動作會一併移除這場活動的報名紀錄。`)) return;
+
+        setDeletingEventId(event.id);
+        try {
+            const res = await fetch(`/api/volunteer-events/${event.id}`, { method: "DELETE" });
+
+            if (res.ok) {
+                await fetchAdminData();
+            } else {
+                alert("刪除活動失敗，只有管理員可以刪除活動。");
+            }
+        } finally {
+            setDeletingEventId(null);
+        }
     };
 
     const formatDateTime = (value: string) => {
@@ -555,6 +645,25 @@ export default function VolunteerAdminClient() {
                                                 <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
                                                     <button
                                                         type="button"
+                                                        onClick={() => startEditingEvent(event)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
+                                                    >
+                                                        <Edit3 className="w-3.5 h-3.5" />
+                                                        編輯
+                                                    </button>
+                                                    {isCurrentUserAdmin && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => deleteEvent(event)}
+                                                            disabled={deletingEventId === event.id}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600/75 hover:bg-rose-500 disabled:opacity-60 px-3 py-1.5 text-xs font-semibold transition"
+                                                        >
+                                                            {deletingEventId === event.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                                            刪除
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
                                                         onClick={() => showQrCode(event)}
                                                         disabled={tokenUpdatingId === event.id}
                                                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-60 px-3 py-1.5 text-xs font-semibold transition"
@@ -572,6 +681,169 @@ export default function VolunteerAdminClient() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {editingEventId === event.id && (
+                                            <form onSubmit={updateEvent} className="mt-4 space-y-4 rounded-xl border border-[#61C5C7]/20 bg-[#071820]/55 p-4">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-2 text-sm font-semibold text-[#D9FFFF]">
+                                                        <Edit3 className="h-4 w-4" />
+                                                        編輯活動內容
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditingEventId(null)}
+                                                        className="rounded-lg p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
+                                                        title="取消編輯"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <input
+                                                        required
+                                                        value={editForm.title}
+                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                                                        placeholder="活動名稱"
+                                                        className="glass-input rounded-xl px-4 py-3"
+                                                    />
+                                                    <input
+                                                        value={editForm.slug}
+                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, slug: e.target.value }))}
+                                                        placeholder="活動網址代號"
+                                                        className="glass-input rounded-xl px-4 py-3"
+                                                    />
+                                                </div>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <label className="space-y-1 block">
+                                                        <span className="text-sm text-slate-300">活動分類</span>
+                                                        <select
+                                                            value={editForm.category}
+                                                            onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                                                            className="w-full glass-input rounded-xl px-4 py-3"
+                                                        >
+                                                            <option value="" className="bg-[#173246] text-white">
+                                                                無
+                                                            </option>
+                                                            {VOLUNTEER_EVENT_CATEGORIES.map((category) => (
+                                                                <option key={category.label} value={category.label} className="bg-[#173246] text-white">
+                                                                    {category.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </label>
+                                                    <label className="space-y-1 block">
+                                                        <span className="text-sm text-slate-300">封面圖網址</span>
+                                                        <input
+                                                            value={editForm.coverImageUrl}
+                                                            onChange={(e) => setEditForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
+                                                            placeholder="可留空，使用分類預設圖"
+                                                            className="w-full glass-input rounded-xl px-4 py-3"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <textarea
+                                                    value={editForm.description}
+                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                                                    placeholder="活動說明"
+                                                    className="w-full min-h-24 glass-input rounded-xl px-4 py-3"
+                                                />
+                                                <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editIsOnlineEvent}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            setEditIsOnlineEvent(checked);
+                                                            if (checked) {
+                                                                setEditForm((prev) => ({ ...prev, location: "", mapUrl: "" }));
+                                                            }
+                                                        }}
+                                                        className="h-4 w-4 accent-[#61C5C7]"
+                                                    />
+                                                    <Monitor className="h-4 w-4 text-[#61C5C7]" />
+                                                    線上活動
+                                                </label>
+                                                {!editIsOnlineEvent && (
+                                                    <div className="grid gap-3 md:grid-cols-2">
+                                                        <div className="space-y-1">
+                                                            <span className="text-sm text-slate-300">集合地點</span>
+                                                            <AddressInput
+                                                                defaultValue={editForm.location}
+                                                                onPlaceSelected={handleEditPlaceSelected}
+                                                                onInputChange={(value) => setEditForm((prev) => ({ ...prev, location: value }))}
+                                                                placeholder="輸入地點或地址，例如：虎林"
+                                                            />
+                                                        </div>
+                                                        <label className="space-y-1 block">
+                                                            <span className="text-sm text-slate-300">Google Maps 連結</span>
+                                                            <input
+                                                                value={editForm.mapUrl}
+                                                                onChange={(e) => setEditForm((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                                                                placeholder="Google Maps 連結，可留空"
+                                                                className="w-full glass-input rounded-xl px-4 py-3"
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                )}
+                                                <div className="grid gap-3 md:grid-cols-3">
+                                                    <label className="space-y-1">
+                                                        <span className="text-sm text-slate-300">開始時間 *</span>
+                                                        <input
+                                                            required
+                                                            type="datetime-local"
+                                                            value={editForm.startsAt}
+                                                            onChange={(e) => setEditForm((prev) => ({ ...prev, startsAt: e.target.value }))}
+                                                            className="w-full glass-input rounded-xl px-4 py-3"
+                                                        />
+                                                    </label>
+                                                    <label className="space-y-1">
+                                                        <span className="text-sm text-slate-300">結束時間</span>
+                                                        <input
+                                                            type="datetime-local"
+                                                            value={editForm.endsAt}
+                                                            onChange={(e) => setEditForm((prev) => ({ ...prev, endsAt: e.target.value }))}
+                                                            className="w-full glass-input rounded-xl px-4 py-3"
+                                                        />
+                                                    </label>
+                                                    <label className="space-y-1">
+                                                        <span className="text-sm text-slate-300">報名截止時間</span>
+                                                        <input
+                                                            type="datetime-local"
+                                                            value={editForm.registrationDeadline}
+                                                            onChange={(e) => setEditForm((prev) => ({ ...prev, registrationDeadline: e.target.value }))}
+                                                            className="w-full glass-input rounded-xl px-4 py-3"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <label className="space-y-1 block">
+                                                    <span className="text-sm text-slate-300">預期人數（選填）</span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={editForm.capacity}
+                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, capacity: e.target.value }))}
+                                                        placeholder="手動輸入預期人數"
+                                                        className="w-full glass-input rounded-xl px-4 py-3"
+                                                    />
+                                                </label>
+                                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditingEventId(null)}
+                                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold transition hover:bg-white/15"
+                                                    >
+                                                        取消
+                                                    </button>
+                                                    <button
+                                                        disabled={updatingId === event.id}
+                                                        className="inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button px-4 py-3 text-sm font-semibold transition disabled:opacity-60"
+                                                    >
+                                                        {updatingId === event.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                                        儲存修改
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
 
                                         {qrEventId === event.id && event.checkInToken && (
                                             <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">

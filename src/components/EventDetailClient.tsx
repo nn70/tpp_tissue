@@ -30,6 +30,15 @@ type EventDetail = {
         note: string | null;
         phone: string | null;
     } | null;
+    participants?: {
+        id: string;
+        name: string;
+        status: RegistrationStatus;
+        email?: string | null;
+        phone?: string | null;
+        note?: string | null;
+    }[];
+    canSeeParticipantDetails?: boolean;
 };
 
 type Props = {
@@ -66,6 +75,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
     const [registration, setRegistration] = useState(event.currentUserRegistration);
     const [registrationCount, setRegistrationCount] = useState(event.registrationCount);
     const [waitlistCount, setWaitlistCount] = useState(event.waitlistCount);
+    const [participants, setParticipants] = useState(event.participants ?? []);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const status = getEventStatus(event);
@@ -77,6 +87,12 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
     const mapQuery = event.location || event.mapUrl;
     const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
     const coverImageUrl = getVolunteerEventCoverImage(event);
+    const statusLabels: Record<RegistrationStatus, string> = {
+        REGISTERED: "已報名",
+        WAITLISTED: "候補",
+        ATTENDED: "已出席",
+        CANCELLED: "已取消",
+    };
 
     const submitRegistration = async () => {
         setSaving(true);
@@ -111,6 +127,14 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
             }
             setMessage(data.status === "WAITLISTED" ? "候補報名成功，若有名額釋出會由主辦方通知。" : "報名成功，後台已記錄你的參與資料。");
             askToAddGoogleCalendar(event);
+            const eventsRes = await fetch("/api/volunteer-events");
+            if (eventsRes.ok) {
+                const eventsData = await eventsRes.json();
+                const freshEvent = eventsData.events?.find((item: { id: string }) => item.id === event.id);
+                if (freshEvent?.participants) {
+                    setParticipants(freshEvent.participants);
+                }
+            }
         } finally {
             setSaving(false);
         }
@@ -194,6 +218,33 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                         {event.description || "尚未填寫活動說明。"}
                     </div>
                 </section>
+
+                {participants.length > 0 && (
+                    <section className="mt-6 glass-panel rounded-2xl p-6 sm:p-8">
+                        <div className="mb-4 flex items-center gap-2">
+                            <UserCheck className="h-5 w-5 text-[#61C5C7]" />
+                            <h2 className="text-2xl font-bold">已報名志工</h2>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {participants.map((participant) => (
+                                <div key={participant.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                    <div className="font-semibold text-white">
+                                        {participant.name}
+                                        {participant.status === "WAITLISTED" && <span className="ml-2 text-xs text-amber-100">候補</span>}
+                                    </div>
+                                    {event.canSeeParticipantDetails && (
+                                        <div className="mt-2 space-y-1 text-sm text-slate-400">
+                                            {participant.email && <div>Email：{participant.email}</div>}
+                                            {participant.phone && <div>電話：{participant.phone}</div>}
+                                            <div>狀態：{statusLabels[participant.status]}</div>
+                                            {participant.note && <div>備註：{participant.note}</div>}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 <section className="mt-6 glass-panel rounded-2xl p-6 sm:p-8">
                     <h2 className="text-2xl font-bold mb-4">立即報名</h2>

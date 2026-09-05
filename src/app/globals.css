@@ -8,14 +8,18 @@
 }
 
 :root {
-  --background: #f7fbfb;
+  --background: #fffdf7;
   --foreground: #173246;
   --tpp-mint: #61c5c7;
   --tpp-mint-dark: #2aa8ac;
   --tpp-navy: #3b597d;
   --tpp-ink: #173246;
-  --tpp-soft: #e7f6f6;
-  --tpp-line: rgba(97, 197, 199, 0.24);
+  --tpp-soft: #ecfbf8;
+  --tpp-cream: #fff8e8;
+  --tpp-sakura: #ffe9df;
+  --tpp-gold: #f7c948;
+  --tpp-line: rgba(54, 159, 164, 0.2);
+  --tpp-shadow: rgba(49, 116, 128, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,15 +31,16 @@
 
 @layer base {
   html {
-    background: #f2ffff;
+    background: #fffdf7;
   }
 
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at top left, rgba(97, 197, 199, 0.28), transparent 34rem),
-      radial-gradient(circle at 85% 8%, rgba(59, 89, 125, 0.16), transparent 30rem),
-      linear-gradient(135deg, #fbffff 0%, #e4f8f8 45%, #dcecff 100%);
+      linear-gradient(rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+      linear-gradient(135deg, #fffdf7 0%, #eefbf8 46%, #fff1d8 100%);
+    background-size: 28px 28px, 28px 28px, auto;
     color: var(--foreground);
     font-family: var(--font-sans), sans-serif;
   }
@@ -48,36 +53,46 @@
 
 @layer utilities {
   .glass-panel {
-    @apply border shadow-2xl backdrop-blur-xl;
-    background: linear-gradient(180deg, rgba(11, 42, 52, 0.76), rgba(15, 54, 67, 0.66));
-    border-color: var(--tpp-line);
-    box-shadow: 0 18px 44px rgba(23, 50, 70, 0.18);
+    @apply border backdrop-blur-xl;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 253, 247, 0.78)),
+      linear-gradient(135deg, rgba(236, 251, 248, 0.72), rgba(255, 241, 216, 0.38));
+    border-color: rgba(54, 159, 164, 0.2);
+    box-shadow: 0 18px 42px var(--tpp-shadow);
+    color: var(--tpp-ink);
   }
 
   .glass-input {
-    @apply border text-white placeholder-white/50 backdrop-blur-md transition-all duration-300;
-    background: rgba(7, 24, 32, 0.38);
-    border-color: rgba(255, 255, 255, 0.14);
+    @apply border backdrop-blur-md transition-all duration-300;
+    background: rgba(255, 255, 255, 0.76);
+    border-color: rgba(54, 159, 164, 0.22);
+    color: var(--tpp-ink);
+  }
+
+  .glass-input::placeholder {
+    color: rgba(23, 50, 70, 0.48);
   }
 
   .glass-input:focus {
     outline: none;
-    border-color: rgba(97, 197, 199, 0.74);
-    box-shadow: 0 0 0 3px rgba(97, 197, 199, 0.22);
+    border-color: rgba(42, 168, 172, 0.72);
+    box-shadow: 0 0 0 3px rgba(97, 197, 199, 0.18);
   }
 
   .tpp-page {
-    @apply min-h-screen text-slate-100;
+    @apply min-h-screen;
     background:
-      radial-gradient(circle at 12% 0%, rgba(97, 197, 199, 0.3), transparent 30rem),
-      radial-gradient(circle at 90% 10%, rgba(59, 89, 125, 0.18), transparent 30rem),
-      linear-gradient(135deg, #fbffff 0%, #e4f8f8 46%, #dcecff 100%);
+      linear-gradient(rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+      linear-gradient(135deg, #fffdf7 0%, #e8fbf8 45%, #fff0d6 100%);
+    background-size: 28px 28px, 28px 28px, auto;
+    color: var(--tpp-ink);
   }
 
   .tpp-primary-button {
     @apply inline-flex items-center justify-center font-semibold text-white transition disabled:opacity-60;
-    background: linear-gradient(135deg, var(--tpp-mint-dark), var(--tpp-navy));
-    box-shadow: 0 14px 34px rgba(42, 168, 172, 0.22);
+    background: linear-gradient(135deg, #2aa8ac, #3b597d);
+    box-shadow: 0 14px 28px rgba(42, 168, 172, 0.22);
   }
 
   .tpp-primary-button:hover {
@@ -86,14 +101,52 @@
 
   .tpp-soft-chip {
     @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm;
-    background: rgba(97, 197, 199, 0.12);
-    color: #d9ffff;
-    border: 1px solid rgba(97, 197, 199, 0.18);
+    background: rgba(97, 197, 199, 0.16);
+    color: var(--tpp-ink);
+    border: 1px solid rgba(97, 197, 199, 0.24);
   }
 
   .tpp-brand-mark {
     @apply flex items-center justify-center font-black text-white;
     background: linear-gradient(135deg, var(--tpp-mint), var(--tpp-navy));
     box-shadow: 0 12px 32px rgba(97, 197, 199, 0.2);
+  }
+
+  .glass-panel .text-white,
+  .glass-panel .text-slate-100,
+  .glass-panel .text-slate-200 {
+    color: var(--tpp-ink);
+  }
+
+  .glass-panel .text-\[\#D9FFFF\] {
+    color: #25777b;
+  }
+
+  .glass-panel .text-slate-300 {
+    color: rgba(23, 50, 70, 0.76);
+  }
+
+  .glass-panel .text-slate-400,
+  .glass-panel .text-slate-500 {
+    color: rgba(23, 50, 70, 0.58);
+  }
+
+  .glass-panel .bg-black\/20,
+  .glass-panel .bg-black\/15,
+  .glass-panel .bg-black\/30,
+  .glass-panel .bg-\[\#071820\]\/55,
+  .glass-panel .bg-\[\#071820\]\/60 {
+    background-color: rgba(255, 255, 255, 0.48);
+  }
+
+  .glass-panel .bg-white\/5,
+  .glass-panel .bg-white\/10 {
+    background-color: rgba(97, 197, 199, 0.1);
+  }
+
+  .glass-panel .border-white\/5,
+  .glass-panel .border-white\/10,
+  .glass-panel .border-white\/20 {
+    border-color: rgba(54, 159, 164, 0.18);
   }
 }

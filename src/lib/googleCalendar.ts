@@ -7,6 +7,7 @@ type CalendarEventInput = {
     location?: string;
     startsAt: Date;
     endsAt?: Date;
+    reminders?: { method: "popup" | "email"; minutes: number }[];
 };
 
 async function refreshGoogleAccessToken(accountId: string, refreshToken: string) {
@@ -96,7 +97,7 @@ export async function createCalendarReminder(input: CalendarEventInput) {
             },
             reminders: {
                 useDefault: false,
-                overrides: [
+                overrides: input.reminders ?? [
                     { method: "popup", minutes: 60 },
                     { method: "email", minutes: 24 * 60 },
                 ],

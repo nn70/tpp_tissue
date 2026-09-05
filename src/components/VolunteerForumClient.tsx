@@ -28,6 +28,14 @@ type VolunteerEvent = {
         note: string | null;
         phone: string | null;
     } | null;
+    participants?: {
+        id: string;
+        name: string;
+        status: RegistrationStatus;
+        email?: string | null;
+        phone?: string | null;
+        note?: string | null;
+    }[];
 };
 
 type RewardProgress = {
@@ -49,6 +57,13 @@ export default function VolunteerForumClient() {
     const [savedPhone, setSavedPhone] = useState("");
     const [profileSaving, setProfileSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
+
+    const statusLabels: Record<RegistrationStatus, string> = {
+        REGISTERED: "已報名",
+        WAITLISTED: "候補",
+        ATTENDED: "已出席",
+        CANCELLED: "已取消",
+    };
 
     const fetchEvents = async () => {
         try {
@@ -247,7 +262,7 @@ export default function VolunteerForumClient() {
                                 志工個人資料
                             </div>
                             <p className="mt-1 text-xs leading-5 text-slate-400">
-                                第一次報名請留下姓名與電話，之後系統會自動帶出；現場 QR 報到需輸入相同電話。
+                                第一次報名請留下姓名與電話，之後系統會自動帶出。
                             </p>
                         </div>
                         <div className="grid w-full gap-2 sm:max-w-2xl sm:grid-cols-[1fr_1fr_auto]">
@@ -355,6 +370,33 @@ export default function VolunteerForumClient() {
                                             {isWaitlisted && <div className="mb-1 font-semibold">目前為候補報名，候補名額不限。</div>}
                                             報名姓名：{event.currentUserRegistration?.name || name || "尚未登記"}<br />
                                             報到電話：{event.currentUserRegistration?.phone || phone || "尚未登記，請聯絡工作人員補登"}
+                                        </div>
+                                    )}
+
+                                    {event.participants && event.participants.length > 0 && (
+                                        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                                                <Users className="h-4 w-4 text-[#61C5C7]" />
+                                                已報名志工
+                                            </div>
+                                            <div className="space-y-2">
+                                                {event.participants.map((participant) => (
+                                                    <div key={participant.id} className="rounded-lg bg-black/15 px-3 py-2 text-sm text-slate-300">
+                                                        <div className="font-medium text-slate-100">
+                                                            {participant.name}
+                                                            {participant.status === "WAITLISTED" && <span className="ml-2 text-xs text-amber-100">候補</span>}
+                                                        </div>
+                                                        {(participant.email || participant.phone || participant.note) && (
+                                                            <div className="mt-1 text-xs leading-5 text-slate-400">
+                                                                {participant.email && <div>Email：{participant.email}</div>}
+                                                                {participant.phone && <div>電話：{participant.phone}</div>}
+                                                                <div>狀態：{statusLabels[participant.status]}</div>
+                                                                {participant.note && <div>備註：{participant.note}</div>}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 

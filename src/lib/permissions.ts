@@ -8,11 +8,11 @@ export function getRole(session: Session | null): string | undefined {
 
 export function canManageContent(session: Session | null): boolean {
     const role = getRole(session);
-    return role === "ADMIN" || role === "EDITOR";
+    return role === "ADMIN" || role === "EDITOR" || isSuperUser(session);
 }
 
 export function isAdmin(session: Session | null): boolean {
-    return getRole(session) === "ADMIN";
+    return getRole(session) === "ADMIN" || isSuperUser(session);
 }
 
 export function isSuperUser(session: Session | null): boolean {
