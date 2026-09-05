@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, Users, Shield, LogOut } from "lucide-react";
+import { CalendarCheck, Map, Users, Shield, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Navigation() {
@@ -11,6 +11,8 @@ export default function Navigation() {
     const isDashboard = pathname === "/dashboard" || pathname === "/";
     const isForum = pathname === "/forum";
     const isAdmin = pathname === "/admin";
+    const isVolunteerAdmin = pathname === "/volunteer-admin";
+    const canManageContent = session?.user?.role === "ADMIN" || session?.user?.role === "EDITOR";
 
     return (
         <nav className="fixed top-0 w-full z-50 bg-[#0f1016]/80 backdrop-blur-xl border-b border-white/10 shrink-0">
@@ -40,9 +42,7 @@ export default function Navigation() {
                         </Link>
 
                         <Link
-                            href="https://registerforum.vercel.app/"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="/forum"
                             className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
                                 ${isForum
                                     ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/50 shadow-lg shadow-blue-500/10'
@@ -54,7 +54,22 @@ export default function Navigation() {
                             <span className="sm:hidden">報名系統</span>
                         </Link>
 
-                        {(session?.user as any)?.role === "ADMIN" && (
+                        {canManageContent && (
+                            <Link
+                                href="/volunteer-admin"
+                                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
+                                    ${isVolunteerAdmin
+                                        ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10'
+                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                    }`}
+                            >
+                                <CalendarCheck className="w-4 h-4" />
+                                <span className="hidden sm:inline">志工後台</span>
+                                <span className="sm:hidden">後台</span>
+                            </Link>
+                        )}
+
+                        {session?.user?.role === "ADMIN" && (
                             <Link
                                 href="/admin"
                                 className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
