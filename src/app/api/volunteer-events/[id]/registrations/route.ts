@@ -49,6 +49,11 @@ export async function POST(request: Request, props: RouteParams) {
         }
 
         const existingRegistration = event.registrations.find((registration) => registration.userId === session.user.id);
+        const confirmedCount = event.registrations.filter((registration) => (
+            registration.status === "REGISTERED" || registration.status === "ATTENDED"
+        )).length;
+        const isFull = event.capacity !== null && confirmedCount >= event.capacity;
+        const nextStatus = isFull ? "WAITLISTED" : "REGISTERED";
 
         const registration = await prisma.volunteerRegistration.upsert({
             where: {
@@ -61,10 +66,11 @@ export async function POST(request: Request, props: RouteParams) {
                 eventId: id,
                 userId: session.user.id,
                 phone: normalizedPhone,
+                status: nextStatus as any,
                 note: note || null,
             },
             update: {
-                status: "REGISTERED",
+                status: (existingRegistration?.status === "ATTENDED" ? "ATTENDED" : nextStatus) as any,
                 phone: existingRegistration?.phone || normalizedPhone,
                 note: note || existingRegistration?.note || null,
             },

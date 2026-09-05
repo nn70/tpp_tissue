@@ -6,7 +6,7 @@ import imageCompression from "browser-image-compression";
 import { CalendarPlus, CheckCircle2, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 
-type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
+type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
 type AdminRegistration = {
     id: string;
@@ -55,6 +55,7 @@ type VolunteerStats = {
 
 const statusLabels: Record<RegistrationStatus, string> = {
     REGISTERED: "已報名",
+    WAITLISTED: "候補",
     ATTENDED: "已出席",
     CANCELLED: "已取消",
 };
@@ -104,6 +105,7 @@ export default function VolunteerAdminClient() {
         return {
             events: events.length,
             registered: registrations.filter((registration) => registration.status === "REGISTERED").length,
+            waitlisted: registrations.filter((registration) => registration.status === "WAITLISTED").length,
             attended: registrations.filter((registration) => registration.status === "ATTENDED").length,
         };
     }, [events]);
@@ -255,7 +257,7 @@ export default function VolunteerAdminClient() {
     return (
         <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto space-y-6 pb-10">
-                <section className="grid md:grid-cols-3 gap-4">
+                <section className="grid md:grid-cols-4 gap-4">
                     <div className="glass-panel rounded-2xl p-5">
                         <div className="text-sm text-slate-400">活動數</div>
                         <div className="text-3xl font-black mt-2">{totals.events}</div>
@@ -263,6 +265,10 @@ export default function VolunteerAdminClient() {
                     <div className="glass-panel rounded-2xl p-5">
                         <div className="text-sm text-slate-400">目前報名</div>
                         <div className="text-3xl font-black mt-2">{totals.registered}</div>
+                    </div>
+                    <div className="glass-panel rounded-2xl p-5">
+                        <div className="text-sm text-slate-400">候補人數</div>
+                        <div className="text-3xl font-black mt-2">{totals.waitlisted}</div>
                     </div>
                     <div className="glass-panel rounded-2xl p-5">
                         <div className="text-sm text-slate-400">已確認出席</div>
@@ -448,8 +454,13 @@ export default function VolunteerAdminClient() {
                                             </div>
                                             <div className="flex flex-col items-start sm:items-end gap-2">
                                                 <span className="text-xs text-slate-400">
-                                                    {event.registrations.filter((registration) => registration.status !== "CANCELLED").length}
+                                                    {event.registrations.filter((registration) => (
+                                                        registration.status === "REGISTERED" || registration.status === "ATTENDED"
+                                                    )).length}
                                                     {event.capacity ? ` / 預期 ${event.capacity}` : ""} 人
+                                                    {event.registrations.some((registration) => registration.status === "WAITLISTED") && (
+                                                        <>，候補 {event.registrations.filter((registration) => registration.status === "WAITLISTED").length} 人</>
+                                                    )}
                                                 </span>
                                                 <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
                                                     <button
@@ -482,7 +493,7 @@ export default function VolunteerAdminClient() {
                                                     <div className="min-w-0 space-y-3">
                                                         <div>
                                                             <div className="font-semibold text-[#D9FFFF]">現場報到 QR Code</div>
-                                                            <p className="mt-1 text-sm text-[#D9FFFF]/75">志工掃描後登入 Google，就會自動登記為已出席。</p>
+                                                            <p className="mt-1 text-sm text-[#D9FFFF]/75">志工掃描後登入 Google，並輸入報名電話完成報到。</p>
                                                         </div>
                                                         <div className="break-all rounded-lg bg-black/20 px-3 py-2 text-xs text-slate-300">
                                                             {buildCheckInUrl(event)}
@@ -521,6 +532,7 @@ export default function VolunteerAdminClient() {
                                                                 className="glass-input rounded-lg px-3 py-2 text-sm"
                                                             >
                                                                 <option value="REGISTERED">已報名</option>
+                                                                <option value="WAITLISTED">候補</option>
                                                                 <option value="ATTENDED">已出席</option>
                                                                 <option value="CANCELLED">已取消</option>
                                                             </select>

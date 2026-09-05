@@ -66,6 +66,10 @@ export async function POST(request: Request, props: RouteParams) {
             return NextResponse.json({ error: "查無此活動的有效報名紀錄，請先確認是否已完成報名。" }, { status: 400 });
         }
 
+        if ((existingRegistration.status as string) === "WAITLISTED") {
+            return NextResponse.json({ error: "你目前是候補報名，請先找現場工作人員確認是否可轉為正取後再報到。" }, { status: 400 });
+        }
+
         if (!existingRegistration.phone) {
             return NextResponse.json({ error: "這筆報名資料沒有電話號碼，請找現場工作人員協助。" }, { status: 400 });
         }

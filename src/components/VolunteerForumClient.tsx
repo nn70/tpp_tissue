@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
 
-type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
+type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
 type VolunteerEvent = {
     id: string;
@@ -17,6 +17,7 @@ type VolunteerEvent = {
     endsAt: string | null;
     capacity: number | null;
     registrationCount: number;
+    waitlistCount: number;
     currentUserRegistration: {
         id: string;
         status: RegistrationStatus;
@@ -87,7 +88,8 @@ export default function VolunteerForumClient() {
                 return;
             }
 
-            setMessage("報名成功，後台已記錄你的參與資料。");
+            const data = await res.json();
+            setMessage(data.status === "WAITLISTED" ? "候補報名成功，若有名額釋出會由主辦方通知。" : "報名成功，後台已記錄你的參與資料。");
             askToAddGoogleCalendar(event);
             await fetchEvents();
         } finally {
@@ -215,7 +217,9 @@ export default function VolunteerForumClient() {
                     <section className="grid md:grid-cols-2 gap-4">
                         {events.map((event) => {
                             const status = event.currentUserRegistration?.status;
-                            const isRegistered = status === "REGISTERED" || status === "ATTENDED";
+                            const isWaitlisted = status === "WAITLISTED";
+                            const isRegistered = status === "REGISTERED" || status === "ATTENDED" || isWaitlisted;
+                            const isFull = event.capacity !== null && event.registrationCount >= event.capacity;
 
                             return (
                                 <article key={event.id} className="glass-panel rounded-2xl p-5 space-y-4">
@@ -234,16 +238,23 @@ export default function VolunteerForumClient() {
                                             </div>
                                         </div>
                                         {status === "ATTENDED" && <CheckCircle2 className="w-6 h-6 text-[#61C5C7] shrink-0" />}
+                                        {isWaitlisted && (
+                                            <span className="shrink-0 rounded-full border border-amber-300/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-100">
+                                                候補
+                                            </span>
+                                        )}
                                     </div>
 
                                     {event.description && <p className="text-sm text-slate-300 leading-6">{event.description}</p>}
 
                                     <div className="text-sm text-slate-400">
                                         已報名 {event.registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
+                                        {event.waitlistCount > 0 ? `，候補 ${event.waitlistCount} 人` : ""}
                                     </div>
 
                                     {isRegistered && (
-                                        <div className="rounded-xl border border-[#61C5C7]/20 bg-[#61C5C7]/10 px-3 py-2 text-sm text-[#D9FFFF]">
+                                        <div className={`rounded-xl border px-3 py-2 text-sm ${isWaitlisted ? "border-amber-300/30 bg-amber-400/10 text-amber-100" : "border-[#61C5C7]/20 bg-[#61C5C7]/10 text-[#D9FFFF]"}`}>
+                                            {isWaitlisted && <div className="mb-1 font-semibold">目前為候補報名，候補名額不限。</div>}
                                             報到電話：{event.currentUserRegistration?.phone || phone || "尚未登記，請聯絡工作人員補登"}
                                         </div>
                                     )}
@@ -271,7 +282,7 @@ export default function VolunteerForumClient() {
                                                 disabled={savingId === event.id || status === "ATTENDED"}
                                                 className="flex-1 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
                                             >
-                                                {status === "ATTENDED" ? "已確認出席" : "取消報名"}
+                                                {status === "ATTENDED" ? "已確認出席" : isWaitlisted ? "取消候補" : "取消報名"}
                                             </button>
                                         ) : (
                                             <button
@@ -281,7 +292,7 @@ export default function VolunteerForumClient() {
                                                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
                                             >
                                                 {savingId === event.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                                                我要報名
+                                                {isFull ? "候補報名" : "我要報名"}
                                             </button>
                                         )}
                                     </div>

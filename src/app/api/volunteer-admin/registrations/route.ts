@@ -15,14 +15,14 @@ export async function PATCH(request: Request) {
         const body = await request.json();
         const { registrationId, status } = body;
 
-        if (!registrationId || !["REGISTERED", "ATTENDED", "CANCELLED"].includes(status)) {
+        if (!registrationId || !["REGISTERED", "WAITLISTED", "ATTENDED", "CANCELLED"].includes(status)) {
             return NextResponse.json({ error: "Invalid request" }, { status: 400 });
         }
 
         const registration = await prisma.volunteerRegistration.update({
             where: { id: registrationId },
             data: {
-                status,
+                status: status as any,
                 checkedInAt: status === "ATTENDED" ? new Date() : null,
             },
         });

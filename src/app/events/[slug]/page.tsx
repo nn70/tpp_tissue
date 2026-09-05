@@ -64,7 +64,10 @@ export default async function EventPage({ params }: PageProps) {
                 endsAt: event.endsAt?.toISOString() ?? null,
                 registrationDeadline: event.registrationDeadline?.toISOString() ?? null,
                 capacity: event.capacity,
-                registrationCount: event.registrations.filter((registration) => registration.status !== "CANCELLED").length,
+                registrationCount: event.registrations.filter((registration) => (
+                    registration.status === "REGISTERED" || registration.status === "ATTENDED"
+                )).length,
+                waitlistCount: event.registrations.filter((registration) => (registration.status as string) === "WAITLISTED").length,
                 currentUserRegistration,
             }}
         />

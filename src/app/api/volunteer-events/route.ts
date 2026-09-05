@@ -51,7 +51,10 @@ export async function GET() {
         events: events.map(({ checkInToken, ...event }) => ({
             ...event,
             currentUserRegistration: event.registrations.find((registration) => registration.userId === session.user.id) ?? null,
-            registrationCount: event.registrations.filter((registration) => registration.status !== "CANCELLED").length,
+            registrationCount: event.registrations.filter((registration) => (
+                registration.status === "REGISTERED" || registration.status === "ATTENDED"
+            )).length,
+            waitlistCount: event.registrations.filter((registration) => (registration.status as string) === "WAITLISTED").length,
             checkInToken: manage ? checkInToken : undefined,
             registrations: manage ? event.registrations : undefined,
         })),

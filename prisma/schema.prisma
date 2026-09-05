@@ -19,6 +19,7 @@ enum Role {
 
 enum VolunteerRegistrationStatus {
   REGISTERED
+  WAITLISTED
   ATTENDED
   CANCELLED
 }

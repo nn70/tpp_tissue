@@ -5,7 +5,7 @@ import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, UserCheck } from "lucide-react";
 import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
 
-type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
+type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
 type EventDetail = {
     id: string;
@@ -20,6 +20,7 @@ type EventDetail = {
     registrationDeadline: string | null;
     capacity: number | null;
     registrationCount: number;
+    waitlistCount: number;
     currentUserRegistration: {
         id: string;
         status: RegistrationStatus;
@@ -60,12 +61,15 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
     const [phone, setPhone] = useState(event.currentUserRegistration?.phone ?? currentUserPhone);
     const [registration, setRegistration] = useState(event.currentUserRegistration);
     const [registrationCount, setRegistrationCount] = useState(event.registrationCount);
+    const [waitlistCount, setWaitlistCount] = useState(event.waitlistCount);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const status = getEventStatus(event);
     const closesAt = new Date(event.registrationDeadline ?? event.startsAt).getTime();
     const isClosed = closesAt < Date.now() || new Date(event.startsAt).getTime() < Date.now();
-    const isRegistered = registration?.status === "REGISTERED" || registration?.status === "ATTENDED";
+    const isWaitlisted = registration?.status === "WAITLISTED";
+    const isRegistered = registration?.status === "REGISTERED" || registration?.status === "ATTENDED" || isWaitlisted;
+    const isFull = event.capacity !== null && registrationCount >= event.capacity;
     const mapQuery = event.location || event.mapUrl;
     const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
 
@@ -94,8 +98,13 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
 
             const data = await res.json();
             setRegistration(data);
-            setRegistrationCount((count) => count + (isRegistered ? 0 : 1));
-            setMessage("報名成功，後台已記錄你的參與資料。");
+            if (!isRegistered && data.status !== "WAITLISTED") {
+                setRegistrationCount((count) => count + 1);
+            }
+            if (!isRegistered && data.status === "WAITLISTED") {
+                setWaitlistCount((count) => count + 1);
+            }
+            setMessage(data.status === "WAITLISTED" ? "候補報名成功，若有名額釋出會由主辦方通知。" : "報名成功，後台已記錄你的參與資料。");
             askToAddGoogleCalendar(event);
         } finally {
             setSaving(false);
@@ -146,6 +155,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
 
                     <div className="mt-5 rounded-xl bg-black/20 border border-white/10 p-4 text-sm text-slate-300">
                         已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
+                        {waitlistCount > 0 ? `，候補 ${waitlistCount} 人` : ""}
                     </div>
 
                     {mapEmbedUrl && (
@@ -202,6 +212,19 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                 已確認出席
                             </div>
                         </div>
+                    ) : isWaitlisted ? (
+                        <div className="rounded-xl bg-amber-400/10 border border-amber-300/30 p-5">
+                            <div className="flex items-center gap-2 font-semibold text-amber-100">
+                                <CheckCircle2 className="w-5 h-5" />
+                                你已完成候補報名
+                            </div>
+                            {(registration?.phone || currentUserPhone) && (
+                                <p className="text-sm text-amber-100/80 mt-2">
+                                    報到電話：{registration?.phone || currentUserPhone}
+                                </p>
+                            )}
+                            <p className="text-sm text-amber-100/75 mt-2">候補名額不限；若有名額釋出，將由主辦方通知。</p>
+                        </div>
                     ) : isRegistered ? (
                         <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/20 p-5">
                             <div className="flex items-center gap-2 font-semibold text-[#D9FFFF]">
@@ -219,6 +242,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                         <div className="space-y-4">
                             <div className="text-sm text-slate-400">
                                 已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
+                                {waitlistCount > 0 ? `，候補 ${waitlistCount} 人` : ""}
                             </div>
                             <div>
                                 <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
@@ -250,7 +274,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                 className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl tpp-primary-button disabled:opacity-50 px-6 py-3 font-semibold transition"
                             >
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                                送出報名
+                                {isFull ? "候補報名" : "送出報名"}
                             </button>
                         </div>
                     )}
