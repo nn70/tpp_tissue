@@ -4,6 +4,25 @@ import { signIn } from "next-auth/react";
 import { LogIn } from "lucide-react";
 
 export default function LoginPage() {
+    const loginWithGoogle = () => {
+        const currentUrl = new URL(window.location.href);
+        const callbackUrl = currentUrl.searchParams.get("callbackUrl") || "/forum";
+        const userAgent = navigator.userAgent || "";
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(userAgent);
+        const isInAppBrowser = /Line|FBAN|FBAV|Instagram|MicroMessenger|Messenger|Twitter|LinkedInApp|KAKAOTALK/i.test(userAgent);
+        const isExternalBrowserRequested = currentUrl.searchParams.get("openExternalBrowser") === "1";
+
+        if (isMobile && isInAppBrowser && !isExternalBrowserRequested) {
+            const externalLoginUrl = new URL("/login", currentUrl.origin);
+            externalLoginUrl.searchParams.set("openExternalBrowser", "1");
+            externalLoginUrl.searchParams.set("callbackUrl", callbackUrl);
+            window.location.href = externalLoginUrl.toString();
+            return;
+        }
+
+        signIn("google", { callbackUrl });
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] tpp-page p-4">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-md w-full text-center space-y-8 shadow-xl">
@@ -19,7 +38,7 @@ export default function LoginPage() {
 
                 <div className="pt-4 border-t border-white/5">
                     <button
-                        onClick={() => signIn("google", { callbackUrl: "/forum" })}
+                        onClick={loginWithGoogle}
                         className="w-full flex items-center justify-center space-x-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3.5 px-4 rounded-xl transition-all duration-200"
                     >
                         <LogIn className="w-5 h-5 text-slate-700" />
@@ -27,6 +46,9 @@ export default function LoginPage() {
                     </button>
                     <p className="mt-4 text-xs leading-5 text-slate-400">
                         登入即表示您同意我們的服務條款和隱私政策
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                        手機若從 LINE 或社群 App 開啟，系統會先改用手機瀏覽器完成登入。
                     </p>
                 </div>
             </div>

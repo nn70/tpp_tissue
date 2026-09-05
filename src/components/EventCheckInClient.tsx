@@ -37,7 +37,7 @@ export default function EventCheckInClient({ event, token, isLoggedIn }: Props) 
     const [message, setMessage] = useState(isLoggedIn ? "請輸入報名時留下的電話號碼完成報到。" : "請先登入 Google 帳號完成報到。");
     const callbackUrl = useMemo(() => {
         const path = `/events/${event.slug || event.id}/check-in?token=${encodeURIComponent(token)}`;
-        return `/api/auth/signin/google?callbackUrl=${encodeURIComponent(path)}`;
+        return `/login?callbackUrl=${encodeURIComponent(path)}`;
     }, [event.id, event.slug, token]);
 
     const checkIn = async (e: FormEvent) => {

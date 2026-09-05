@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TPP 松信區志工報名系統
 
-## Getting Started
+一套為松山信義區志工活動設計的線上報名與管理系統，整合 Google 登入、活動報名、現場 QR Code 報到、志工出席統計、里程碑說明，以及管理員/小編使用的活動與物資發放紀錄後台。
 
-First, run the development server:
+正式網站：[https://tpp-tissue.vercel.app](https://tpp-tissue.vercel.app)
+
+![站路口活動示意](public/event-category-defaults/street-corner.jpg)
+
+## 網站能做什麼
+
+這個網站的核心目標，是讓志工可以快速找到活動、用 Google 帳號報名，主辦方則能在後台建立活動、管理報名資料、統計出席次數，並追蹤物資發放紀錄。
+
+| 功能 | 對象 | 說明 |
+| --- | --- | --- |
+| Google 登入 | 所有人 | 志工必須登入 Google 帳號後才能報名活動。 |
+| 志工活動報名 | 志工 | 可查看活動資訊、地點、時間、報名狀態，並完成線上報名。 |
+| 姓名與電話紀錄 | 志工 | 第一次報名需填寫姓名與電話，之後系統會自動帶出，也可自行修改。 |
+| 活動建立與管理 | 管理員/小編 | 可建立、編輯活動；管理員可刪除活動。 |
+| QR Code 現場報到 | 管理員/小編、志工 | 每個活動可產生報到 QR Code，志工現場輸入報名時的電話完成報到。 |
+| 參與者名單 | 志工、管理員/小編 | 志工報名後可看到其他參與者名稱；管理員/小編可看到完整資料。 |
+| 物資發放紀錄 | 管理員/小編 | 可在地圖上記錄物資發放地點、對象、品項與後續提醒。一般志工看不到此項。 |
+| 志工里程碑 | 志工 | 依完成報到次數顯示不同階段的志工參與紀錄與感謝項目。 |
+
+## 志工報名流程
+
+志工進入網站後，首頁預設為「志工報名系統」。登入 Google 帳號後即可瀏覽活動列表，第一次報名時必須留下姓名與電話，方便主辦方日後聯繫。
+
+報名完成後，系統會詢問是否加入 Google Calendar，預設提醒時間為活動開始前 1 小時。若活動已額滿，志工仍可選擇候補報名，候補名額不限。
+
+![掃菜市場活動示意](public/event-category-defaults/market.jpg)
+
+## 活動頁面
+
+每個活動頁面會直接顯示活動資訊與地圖，不需要另外點擊「查看地圖」。活動可設定：
+
+- 活動名稱、說明、開始時間、結束時間與報名截止時間
+- 活動地點，支援地址自動建議，例如輸入「虎林」會出現可能地點
+- 線上活動選項，勾選後不需填寫地址
+- 預期人數，選填且可手動輸入
+- 活動分類，預設為「無」，有需要時可選擇分類
+- 活動封面圖，可自行上傳；若未上傳，會依活動分類使用預設圖片
+
+目前預設分類包含：
+
+| 分類 | 預設示意圖 |
+| --- | --- |
+| 站路口 | ![站路口](public/event-category-defaults/street-corner.jpg) |
+| 追垃圾車 | ![追垃圾車](public/event-category-defaults/garbage-truck.jpg) |
+| 掃菜市場 | ![掃菜市場](public/event-category-defaults/market.jpg) |
+| 里民活動 | ![里民活動](public/event-category-defaults/community.jpg) |
+| 輔選 | ![輔選](public/event-category-defaults/campaign.jpg) |
+
+## 系統後台
+
+管理員與小編可以進入「系統後台」建立與編輯活動。管理員具備更高權限，可刪除活動與管理帳號權限。
+
+後台可查看活動參與者完整資料，包含姓名、Email、電話、報名狀態與報到狀態，方便活動前聯繫與現場核對。
+
+![輔選活動示意](public/event-category-defaults/campaign.jpg)
+
+## QR Code 現場報到
+
+每個活動後台都能生成專屬 QR Code。志工到現場掃描 QR Code 後，系統會要求輸入電話號碼；電話必須與報名時登記的號碼一致，才會報到成功。
+
+完成報到後，該次活動才會列入志工的出席次數，並計入志工里程碑進度。
+
+## 物資發放紀錄
+
+「物資發放紀錄」只開放管理員與小編使用。一般志工不會看到這個功能。
+
+管理員/小編可以在地圖上記錄：
+
+- 發放地點
+- 發放給誰
+- 發放了哪些物資
+- 發放時間與備註
+- 物資品項，可由後台手動新增
+
+也可搭配 Google Calendar 建立兩週後提醒，方便回頭聯絡該地點的人，確認是否需要補充物資。
+
+## 志工里程碑
+
+網站提供「志工里程碑說明」頁面，讓志工知道自己的出席次數會如何累積。里程碑以合規、感謝與參與紀錄為主，實際內容須以主辦方公告與法規審查為準。
+
+| 出席次數 | 里程碑 | 示意圖 |
+| --- | --- | --- |
+| 3 次 | 甫投幫小物 | ![甫投幫小物](public/volunteer-rewards/keepsake.webp) |
+| 10 次 | 紙本或電子感謝狀 | ![紙本或電子感謝狀](public/volunteer-rewards/certificate.webp) |
+| 20 次 | TPP 榮譽商品 | ![TPP 榮譽商品](public/volunteer-rewards/honor-merch.webp) |
+| 30 次 | 與民眾黨特定人物合照機會 | ![合照機會](public/volunteer-rewards/group-photo.webp) |
+| 50 次 | 與柯文哲榮譽主席合照機會 | ![榮譽主席合照機會](public/volunteer-rewards/honor-chair-photo.webp) |
+
+### 里程碑免責與合規聲明
+
+所有志工里程碑、感謝項目、紀念品、合照機會與相關安排，均以感謝志工服務、活動參與紀錄與內部行政管理為目的，並非投票、支持特定候選人或政黨之對價或利益交換。
+
+實際項目、數量、資格、發放方式、時間、地點與內容，須依中華民國相關法令、選舉罷免法規、主管機關解釋、主辦方合規審查與現場實際狀況調整。主辦方保留修改、暫停、取消或替換相關規則與項目之權利，且不保證所有項目一定能實現或提供。
+
+## 權限設計
+
+網站目前分為三種主要使用角色：
+
+| 角色 | 可使用功能 |
+| --- | --- |
+| 一般志工 | 活動瀏覽、Google 登入、活動報名、候補報名、查看自己報名紀錄、修改自己的姓名與電話、查看志工里程碑。 |
+| 小編 | 一般志工功能，加上建立/編輯活動、查看參與者完整資料、管理物資發放紀錄。 |
+| 管理員 | 小編功能，加上刪除活動、管理帳號權限。 |
+
+特定超級用戶可刪除任何帳號，方便維護權限與處理測試資料。
+
+## 技術架構
+
+此專案使用：
+
+- Next.js App Router
+- TypeScript
+- Prisma
+- PostgreSQL
+- NextAuth Google 登入
+- Vercel 部署
+
+## 本機開發
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+打開 [http://localhost:3000](http://localhost:3000) 即可在本機查看網站。
