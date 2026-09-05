@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -45,10 +46,11 @@ export async function GET() {
     });
 
     return NextResponse.json({
-        events: events.map((event) => ({
+        events: events.map(({ checkInToken, ...event }) => ({
             ...event,
             currentUserRegistration: event.registrations.find((registration) => registration.userId === session.user.id) ?? null,
             registrationCount: event.registrations.filter((registration) => registration.status !== "CANCELLED").length,
+            checkInToken: manage ? checkInToken : undefined,
             registrations: manage ? event.registrations : undefined,
         })),
         rewardProgress: getRewardProgress(attendedCount),
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
         const event = await prisma.volunteerEvent.create({
             data: {
                 slug: normalizedSlug || undefined,
+                checkInToken: randomUUID(),
                 title: title.trim(),
                 description: description?.trim() || null,
                 location: location?.trim() || null,

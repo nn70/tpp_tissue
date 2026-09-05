@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Gift, ImagePlus, Link2, Loader2, Monitor, RefreshCw, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
@@ -12,6 +12,7 @@ type AdminRegistration = {
     id: string;
     note: string | null;
     status: RegistrationStatus;
+    checkedInAt: string | null;
     createdAt: string;
     user: {
         id: string;
@@ -24,6 +25,7 @@ type AdminRegistration = {
 type AdminEvent = {
     id: string;
     slug: string | null;
+    checkInToken: string | null;
     title: string;
     description: string | null;
     location: string | null;
@@ -62,6 +64,8 @@ export default function VolunteerAdminClient() {
     const [uploadingCover, setUploadingCover] = useState(false);
     const [isOnlineEvent, setIsOnlineEvent] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [qrEventId, setQrEventId] = useState<string | null>(null);
+    const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
     const [form, setForm] = useState({
         title: "",
         slug: "",
@@ -101,6 +105,17 @@ export default function VolunteerAdminClient() {
         };
     }, [events]);
     const isUploadedCover = form.coverImageUrl.startsWith("data:image/");
+
+    const buildCheckInUrl = (event: AdminEvent) => {
+        if (!event.checkInToken || typeof window === "undefined") return "";
+        return `${window.location.origin}/events/${event.slug || event.id}/check-in?token=${encodeURIComponent(event.checkInToken)}`;
+    };
+
+    const buildQrCodeUrl = (event: AdminEvent) => {
+        const url = buildCheckInUrl(event);
+        if (!url) return "";
+        return `https://quickchart.io/qr?size=240&margin=2&text=${encodeURIComponent(url)}`;
+    };
 
     const createEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -190,6 +205,38 @@ export default function VolunteerAdminClient() {
         } finally {
             setUpdatingId(null);
         }
+    };
+
+    const showQrCode = async (event: AdminEvent) => {
+        setQrEventId((current) => (current === event.id ? null : event.id));
+
+        if (event.checkInToken) return;
+
+        setTokenUpdatingId(event.id);
+        try {
+            const res = await fetch(`/api/volunteer-admin/events/${event.id}/check-in-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+            });
+
+            if (!res.ok) {
+                alert("產生 QR Code 失敗。");
+                return;
+            }
+
+            const data = await res.json();
+            setEvents((prev) => prev.map((item) => item.id === event.id ? { ...item, checkInToken: data.checkInToken } : item));
+        } finally {
+            setTokenUpdatingId(null);
+        }
+    };
+
+    const copyCheckInUrl = async (event: AdminEvent) => {
+        const url = buildCheckInUrl(event);
+        if (!url) return;
+
+        await navigator.clipboard.writeText(url);
     };
 
     const formatDateTime = (value: string) => {
@@ -401,15 +448,54 @@ export default function VolunteerAdminClient() {
                                                     {event.registrations.filter((registration) => registration.status !== "CANCELLED").length}
                                                     {event.capacity ? ` / 預期 ${event.capacity}` : ""} 人
                                                 </span>
-                                                <Link
-                                                    href={`/events/${event.slug || event.id}`}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
-                                                >
-                                                    <Link2 className="w-3.5 h-3.5" />
-                                                    活動頁
-                                                </Link>
+                                                <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => showQrCode(event)}
+                                                        disabled={tokenUpdatingId === event.id}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-60 px-3 py-1.5 text-xs font-semibold transition"
+                                                    >
+                                                        {tokenUpdatingId === event.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <QrCode className="w-3.5 h-3.5" />}
+                                                        報到 QR
+                                                    </button>
+                                                    <Link
+                                                        href={`/events/${event.slug || event.id}`}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
+                                                    >
+                                                        <Link2 className="w-3.5 h-3.5" />
+                                                        活動頁
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {qrEventId === event.id && event.checkInToken && (
+                                            <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                                                <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+                                                    <div className="overflow-hidden rounded-xl border border-white/10 bg-white p-2">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={buildQrCodeUrl(event)} alt={`${event.title} 報到 QR Code`} className="h-40 w-40" />
+                                                    </div>
+                                                    <div className="min-w-0 space-y-3">
+                                                        <div>
+                                                            <div className="font-semibold text-emerald-100">現場報到 QR Code</div>
+                                                            <p className="mt-1 text-sm text-emerald-100/75">志工掃描後登入 Google，就會自動登記為已出席。</p>
+                                                        </div>
+                                                        <div className="break-all rounded-lg bg-black/20 px-3 py-2 text-xs text-slate-300">
+                                                            {buildCheckInUrl(event)}
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => copyCheckInUrl(event)}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-2 text-xs font-semibold transition"
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                            複製報到連結
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="mt-4 space-y-2">
                                             {event.registrations.length === 0 ? (
@@ -421,6 +507,7 @@ export default function VolunteerAdminClient() {
                                                             <div className="font-medium text-slate-200">{registration.user.name || "未命名志工"}</div>
                                                             <div className="text-xs text-slate-400">{registration.user.email}</div>
                                                             {registration.note && <div className="text-xs text-slate-300 mt-1">備註：{registration.note}</div>}
+                                                            {registration.checkedInAt && <div className="text-xs text-emerald-300 mt-1">報到：{formatDateTime(registration.checkedInAt)}</div>}
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <select

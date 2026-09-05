@@ -110,6 +110,7 @@ model ItemCategory {
 model VolunteerEvent {
   id          String   @id @default(cuid())
   slug        String?  @unique
+  checkInToken String? @unique
   title       String
   description String?
   location    String?
@@ -132,6 +133,7 @@ model VolunteerRegistration {
   userId    String
   note      String?
   status    VolunteerRegistrationStatus @default(REGISTERED)
+  checkedInAt DateTime?
   createdAt DateTime                    @default(now())
   updatedAt DateTime                    @updatedAt
 

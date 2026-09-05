@@ -21,7 +21,10 @@ export async function PATCH(request: Request) {
 
         const registration = await prisma.volunteerRegistration.update({
             where: { id: registrationId },
-            data: { status },
+            data: {
+                status,
+                checkedInAt: status === "ATTENDED" ? new Date() : null,
+            },
         });
 
         return NextResponse.json(registration);
