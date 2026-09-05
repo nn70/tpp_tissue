@@ -1,7 +1,11 @@
 import { NextAuthOptions, DefaultSession, DefaultUser } from "next-auth";
+import type { AdapterUser } from "next-auth/adapters";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+
+const prismaAdapter = PrismaAdapter(prisma) as any;
 
 declare module "next-auth" {
     interface Session {
@@ -23,7 +27,17 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma) as any,
+    adapter: {
+        ...prismaAdapter,
+        async createUser(user: Omit<AdapterUser, "id">) {
+            return prisma.user.create({
+                data: {
+                    ...user,
+                    role: Role.USER,
+                },
+            });
+        },
+    } as any,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,

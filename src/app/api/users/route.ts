@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+
+const validRoles = new Set<string>([Role.USER, Role.EDITOR, Role.ADMIN]);
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -27,9 +30,13 @@ export async function PUT(request: Request) {
 
     try {
         const { userId, role } = await request.json();
+        if (typeof role !== "string" || !validRoles.has(role)) {
+            return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+        }
+
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: { role }
+            data: { role: role as Role }
         });
         return NextResponse.json(updatedUser);
     } catch (error) {
