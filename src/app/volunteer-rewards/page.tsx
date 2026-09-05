@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Award, CheckCircle2, Gift, Shirt, Sparkles, Users } from "lucide-react";
+import { AlertTriangle, Award, CheckCircle2, Gift, Shirt, Sparkles, Users } from "lucide-react";
 import { rewardMilestones } from "@/lib/volunteerRewards";
 
 const rewardIcons = [Gift, Shirt, Users, Sparkles];
@@ -57,6 +57,18 @@ export default function VolunteerRewardsPage() {
                             <h2 className="font-bold text-white">計算方式</h2>
                             <p className="mt-2 leading-7 text-slate-300">
                                 以活動後台的「已出席」紀錄為準；現場掃描活動 QR Code 成功後，系統會自動更新出席狀態並累計獎勵進度。
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="glass-panel rounded-2xl border-[#61C5C7]/20 bg-[#071820]/60 p-6">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#61C5C7]" />
+                        <div>
+                            <h2 className="font-bold text-white">獎勵免責聲明</h2>
+                            <p className="mt-2 leading-7 text-slate-300">
+                                志工獎勵為主辦方感謝志工參與所規劃之回饋內容，實際兌換資格、兌換方式、獎項品項與提供時間，將依活動執行狀況及主辦方公告為準。主辦方保留調整、變更、替換或終止獎勵規則及獎項內容之權利，恕不保證所有獎勵一定能完整實現或於特定時間提供；造成不便之處，敬請見諒。
                             </p>
                         </div>
                     </div>

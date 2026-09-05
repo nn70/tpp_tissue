@@ -160,6 +160,9 @@ export default function VolunteerForumClient() {
                         <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-[#D9FFFF] hover:text-white">
                             查看完整獎勵說明
                         </Link>
+                        <p className="mt-3 text-xs leading-5 text-slate-500">
+                            獎勵內容及規則以主辦方公告為準，主辦方保留調整獎項與兌換方式之權利。
+                        </p>
                     </div>
                 </section>
 
