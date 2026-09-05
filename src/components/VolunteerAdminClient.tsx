@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Clock, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
-import { DEFAULT_VOLUNTEER_EVENT_CATEGORY, VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
+import { VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -90,7 +90,7 @@ export default function VolunteerAdminClient() {
     const [form, setForm] = useState<EventFormState>({
         title: "",
         slug: "",
-        category: DEFAULT_VOLUNTEER_EVENT_CATEGORY,
+        category: "",
         description: "",
         location: "",
         mapUrl: "",
@@ -128,6 +128,7 @@ export default function VolunteerAdminClient() {
         };
     }, [events]);
     const isUploadedCover = form.coverImageUrl.startsWith("data:image/");
+    const formDefaultCoverImageUrl = getVolunteerEventCoverImage(form);
 
     const buildCheckInUrl = (event: AdminEvent) => {
         if (!event.checkInToken || typeof window === "undefined") return "";
@@ -161,7 +162,7 @@ export default function VolunteerAdminClient() {
                 setForm({
                     title: "",
                     slug: "",
-                    category: DEFAULT_VOLUNTEER_EVENT_CATEGORY,
+                    category: "",
                     description: "",
                     location: "",
                     mapUrl: "",
@@ -310,7 +311,7 @@ export default function VolunteerAdminClient() {
                     <form onSubmit={createEvent} className="glass-panel rounded-2xl p-6 space-y-4">
                         <div className="flex items-center gap-3 mb-2">
                             <CalendarPlus className="w-5 h-5 text-[#61C5C7]" />
-                            <h1 className="text-xl font-bold">建立志工活動</h1>
+                            <h1 className="text-xl font-bold">建立活動</h1>
                         </div>
                         <input
                             required
@@ -332,6 +333,9 @@ export default function VolunteerAdminClient() {
                                 onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                                 className="w-full glass-input rounded-xl px-4 py-3"
                             >
+                                <option value="" className="bg-[#173246] text-white">
+                                    無
+                                </option>
                                 {VOLUNTEER_EVENT_CATEGORIES.map((category) => (
                                     <option key={category.label} value={category.label} className="bg-[#173246] text-white">
                                         {category.label}
@@ -359,10 +363,10 @@ export default function VolunteerAdminClient() {
                                     <img src={form.coverImageUrl} alt="活動封面預覽" className="h-40 w-full object-cover" />
                                 </div>
                             )}
-                            {!form.coverImageUrl && (
+                            {!form.coverImageUrl && formDefaultCoverImageUrl && (
                                 <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={getVolunteerEventCoverImage(form)} alt={`${form.category} 預設封面`} className="h-40 w-full object-cover" />
+                                    <img src={formDefaultCoverImageUrl} alt={`${form.category} 預設封面`} className="h-40 w-full object-cover" />
                                 </div>
                             )}
                             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">
@@ -425,36 +429,45 @@ export default function VolunteerAdminClient() {
                                 />
                             </>
                         )}
-                        <div className="grid sm:grid-cols-2 gap-3">
-                            <label className="space-y-1">
-                                <span className="text-sm text-slate-300">開始時間</span>
-                                <input
-                                    required
-                                    type="datetime-local"
-                                    value={form.startsAt}
-                                    onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
-                                    className="w-full glass-input rounded-xl px-4 py-3"
-                                />
-                            </label>
-                            <label className="space-y-1">
-                                <span className="text-sm text-slate-300">結束時間</span>
-                                <input
-                                    type="datetime-local"
-                                    value={form.endsAt}
-                                    onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
-                                    className="w-full glass-input rounded-xl px-4 py-3"
-                                />
-                            </label>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-[#61C5C7]" />
+                                <span className="text-sm font-semibold text-slate-200">活動時間</span>
+                            </div>
+                            <div className="grid gap-3 lg:grid-cols-3">
+                                <label className="space-y-1">
+                                    <span className="text-sm text-slate-300">開始時間 *</span>
+                                    <input
+                                        required
+                                        type="datetime-local"
+                                        value={form.startsAt}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
+                                        className="w-full glass-input rounded-xl px-4 py-3"
+                                    />
+                                    <span className="block text-xs leading-5 text-slate-500">活動正式開始時間。</span>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="text-sm text-slate-300">結束時間</span>
+                                    <input
+                                        type="datetime-local"
+                                        value={form.endsAt}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
+                                        className="w-full glass-input rounded-xl px-4 py-3"
+                                    />
+                                    <span className="block text-xs leading-5 text-slate-500">選填；不填則行事曆預設 2 小時。</span>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="text-sm text-slate-300">報名截止時間</span>
+                                    <input
+                                        type="datetime-local"
+                                        value={form.registrationDeadline}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, registrationDeadline: e.target.value }))}
+                                        className="w-full glass-input rounded-xl px-4 py-3"
+                                    />
+                                    <span className="block text-xs leading-5 text-slate-500">選填；不填則活動開始前截止。</span>
+                                </label>
+                            </div>
                         </div>
-                        <label className="space-y-1 block">
-                            <span className="text-sm text-slate-300">報名截止時間</span>
-                            <input
-                                type="datetime-local"
-                                value={form.registrationDeadline}
-                                onChange={(e) => setForm((prev) => ({ ...prev, registrationDeadline: e.target.value }))}
-                                className="w-full glass-input rounded-xl px-4 py-3"
-                            />
-                        </label>
                         <label className="space-y-1 block">
                             <span className="text-sm text-slate-300">預期人數（選填）</span>
                             <input
@@ -497,15 +510,19 @@ export default function VolunteerAdminClient() {
                             <div className="space-y-4 max-h-[720px] overflow-y-auto pr-1">
                                 {events.map((event) => (
                                     <article key={event.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
-                                        <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={getVolunteerEventCoverImage(event)} alt={event.title} className="h-36 w-full object-cover" />
-                                        </div>
+                                        {getVolunteerEventCoverImage(event) && (
+                                            <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={getVolunteerEventCoverImage(event) ?? ""} alt={event.title} className="h-36 w-full object-cover" />
+                                            </div>
+                                        )}
                                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                                             <div>
-                                                <div className="mb-1 inline-flex rounded-full border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-2.5 py-1 text-xs font-semibold text-[#D9FFFF]">
-                                                    {event.category || DEFAULT_VOLUNTEER_EVENT_CATEGORY}
-                                                </div>
+                                                {event.category && (
+                                                    <div className="mb-1 inline-flex rounded-full border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-2.5 py-1 text-xs font-semibold text-[#D9FFFF]">
+                                                        {event.category}
+                                                    </div>
+                                                )}
                                                 <h3 className="font-bold text-white">{event.title}</h3>
                                                 <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}｜{event.location || "線上活動"}</p>
                                             </div>

@@ -67,7 +67,7 @@ export default function Navigation() {
                                 className={`${baseLinkClass} ${isVolunteerAdmin ? activeLinkClass : inactiveLinkClass}`}
                             >
                                 <CalendarCheck className="w-4 h-4" />
-                                <span className="hidden sm:inline">志工後台</span>
+                                <span className="hidden sm:inline">系統後台</span>
                                 <span className="sm:hidden">後台</span>
                             </Link>
                         )}

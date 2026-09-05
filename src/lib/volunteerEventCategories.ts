@@ -21,23 +21,22 @@ export const VOLUNTEER_EVENT_CATEGORIES = [
     },
 ] as const;
 
-export const DEFAULT_VOLUNTEER_EVENT_CATEGORY = VOLUNTEER_EVENT_CATEGORIES[0].label;
-
 export type VolunteerEventCategory = typeof VOLUNTEER_EVENT_CATEGORIES[number]["label"];
 
-export function normalizeVolunteerEventCategory(value: unknown): VolunteerEventCategory {
+export function normalizeVolunteerEventCategory(value: unknown): VolunteerEventCategory | null {
     if (typeof value !== "string") {
-        return DEFAULT_VOLUNTEER_EVENT_CATEGORY;
+        return null;
     }
 
     const category = VOLUNTEER_EVENT_CATEGORIES.find((item) => item.label === value.trim());
-    return category?.label ?? DEFAULT_VOLUNTEER_EVENT_CATEGORY;
+    return category?.label ?? null;
 }
 
 export function getVolunteerEventCategoryImage(category: string | null | undefined) {
     const normalizedCategory = normalizeVolunteerEventCategory(category);
-    return VOLUNTEER_EVENT_CATEGORIES.find((item) => item.label === normalizedCategory)?.imageUrl
-        ?? VOLUNTEER_EVENT_CATEGORIES[0].imageUrl;
+    return normalizedCategory
+        ? VOLUNTEER_EVENT_CATEGORIES.find((item) => item.label === normalizedCategory)?.imageUrl ?? null
+        : null;
 }
 
 export function getVolunteerEventCoverImage(event: { coverImageUrl?: string | null; category?: string | null }) {
