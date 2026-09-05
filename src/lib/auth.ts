@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { SUPERUSER_EMAIL } from "@/lib/permissions";
 
 const prismaAdapter = PrismaAdapter(prisma) as any;
 
@@ -57,7 +58,7 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async signIn({ user }) {
             // 指定的 Email 自動賦予最高管理員權限
-            const adminEmail = process.env.ADMIN_EMAIL || "nn70nn70@gmail.com";
+            const adminEmail = process.env.ADMIN_EMAIL || SUPERUSER_EMAIL;
 
             if (user.email && user.email === adminEmail) {
                 const dbUser = await prisma.user.findUnique({ where: { email: user.email } }) as any;

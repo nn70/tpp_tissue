@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, User, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Shield, User, RefreshCw, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { SUPERUSER_EMAIL } from "@/lib/permissions";
 
 interface AppUser {
     id: string;
@@ -17,7 +18,9 @@ export default function AdminClient() {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const isSuperUser = session?.user?.email?.toLowerCase() === SUPERUSER_EMAIL;
 
     const fetchUsers = async () => {
         try {
@@ -61,6 +64,36 @@ export default function AdminClient() {
         }
     };
 
+    const handleDeleteUser = async (user: AppUser) => {
+        const label = user.email || user.name || user.id;
+        if (!window.confirm(`確定要刪除 ${label}？此操作會刪除該帳號的登入資料與活動報名紀錄，無法復原。`)) {
+            return;
+        }
+
+        setDeleting(user.id);
+        setMessage(null);
+        try {
+            const res = await fetch("/api/users", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id }),
+            });
+
+            if (res.ok) {
+                setMessage({ type: 'success', text: '帳號已刪除' });
+                await fetchUsers();
+            } else {
+                const error = await res.json().catch(() => ({}));
+                setMessage({ type: 'error', text: error.error || '刪除帳號失敗，請稍後再試' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: '發生系統錯誤' });
+        } finally {
+            setDeleting(null);
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
     return (
         <div className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -90,19 +123,20 @@ export default function AdminClient() {
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300">使用者</th>
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300">目前的權限</th>
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300 text-right">操作設定</th>
+                                    {isSuperUser && <th className="px-6 py-4 text-sm font-medium text-slate-300 text-right">刪除</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-12 text-center text-slate-400">
+                                        <td colSpan={isSuperUser ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
                                             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
                                             載入中...
                                         </td>
                                     </tr>
                                 ) : users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-12 text-center text-slate-400">
+                                        <td colSpan={isSuperUser ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
                                             尚未有使用者註冊
                                         </td>
                                     </tr>
@@ -147,6 +181,19 @@ export default function AdminClient() {
                                                     <p className="text-xs text-slate-500 mt-1">無法調整自己的權限</p>
                                                 )}
                                             </td>
+                                            {isSuperUser && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteUser(user)}
+                                                        disabled={deleting === user.id}
+                                                        className="inline-flex items-center justify-center rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+                                                        title="刪除帳號"
+                                                    >
+                                                        {deleting === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}
