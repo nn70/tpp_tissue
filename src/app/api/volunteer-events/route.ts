@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageContent } from "@/lib/permissions";
 import { getRewardProgress } from "@/lib/volunteerRewards";
+import { normalizeVolunteerEventCategory } from "@/lib/volunteerEventCategories";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { title, slug, description, location, mapUrl, coverImageUrl, startsAt, endsAt, registrationDeadline, capacity, isActive } = body;
+        const { title, slug, category, description, location, mapUrl, coverImageUrl, startsAt, endsAt, registrationDeadline, capacity, isActive } = body;
 
         if (!title?.trim() || !startsAt) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
                 slug: normalizedSlug || undefined,
                 checkInToken: randomUUID(),
                 title: title.trim(),
+                category: normalizeVolunteerEventCategory(category),
                 description: description?.trim() || null,
                 location: location?.trim() || null,
                 mapUrl: mapUrl?.trim() || null,
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
                 registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
                 capacity: capacity ? Number(capacity) : null,
                 isActive: isActive ?? true,
-            },
+            } as unknown as Parameters<typeof prisma.volunteerEvent.create>[0]["data"],
         });
 
         return NextResponse.json(event, { status: 201 });

@@ -48,6 +48,7 @@ export default async function EventPage({ params }: PageProps) {
     const currentUserProfile = session?.user
         ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, phone: true } })
         : null;
+    const category = "category" in event && typeof event.category === "string" ? event.category : null;
 
     return (
         <EventDetailClient
@@ -57,6 +58,7 @@ export default async function EventPage({ params }: PageProps) {
                 id: event.id,
                 slug: event.slug,
                 title: event.title,
+                category,
                 description: event.description,
                 location: event.location,
                 mapUrl: event.mapUrl,

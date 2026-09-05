@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, User, UserCheck } from "lucide-react";
 import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
+import { DEFAULT_VOLUNTEER_EVENT_CATEGORY, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -11,6 +12,7 @@ type EventDetail = {
     id: string;
     slug: string | null;
     title: string;
+    category: string | null;
     description: string | null;
     location: string | null;
     mapUrl: string | null;
@@ -74,6 +76,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
     const isFull = event.capacity !== null && registrationCount >= event.capacity;
     const mapQuery = event.location || event.mapUrl;
     const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
+    const coverImageUrl = getVolunteerEventCoverImage(event);
 
     const submitRegistration = async () => {
         setSaving(true);
@@ -120,12 +123,13 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                     ← 返回活動列表
                 </Link>
 
-                {event.coverImageUrl && (
-                    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30 mb-6">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={event.coverImageUrl} alt={event.title} className="w-full max-h-[420px] object-cover" />
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30 mb-6">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverImageUrl} alt={event.title} className="w-full max-h-[420px] object-cover" />
+                    <div className="border-t border-white/10 bg-black/20 px-4 py-2 text-xs font-semibold text-[#D9FFFF]">
+                        {event.category || DEFAULT_VOLUNTEER_EVENT_CATEGORY}
                     </div>
-                )}
+                </div>
 
                 <section className="glass-panel rounded-2xl p-6 sm:p-8">
                     <div className="mb-4">

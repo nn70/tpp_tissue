@@ -5,6 +5,7 @@ import Link from "next/link";
 import imageCompression from "browser-image-compression";
 import { CalendarPlus, CheckCircle2, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
+import { DEFAULT_VOLUNTEER_EVENT_CATEGORY, VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -30,6 +31,7 @@ type AdminEvent = {
     slug: string | null;
     checkInToken: string | null;
     title: string;
+    category: string | null;
     description: string | null;
     location: string | null;
     mapUrl: string | null;
@@ -54,6 +56,20 @@ type VolunteerStats = {
     unlocked: { times: number; title: string; description: string }[];
 };
 
+type EventFormState = {
+    title: string;
+    slug: string;
+    category: string;
+    description: string;
+    location: string;
+    mapUrl: string;
+    coverImageUrl: string;
+    startsAt: string;
+    endsAt: string;
+    registrationDeadline: string;
+    capacity: string;
+};
+
 const statusLabels: Record<RegistrationStatus, string> = {
     REGISTERED: "已報名",
     WAITLISTED: "候補",
@@ -71,9 +87,10 @@ export default function VolunteerAdminClient() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [qrEventId, setQrEventId] = useState<string | null>(null);
     const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<EventFormState>({
         title: "",
         slug: "",
+        category: DEFAULT_VOLUNTEER_EVENT_CATEGORY,
         description: "",
         location: "",
         mapUrl: "",
@@ -141,7 +158,19 @@ export default function VolunteerAdminClient() {
             });
 
             if (res.ok) {
-                setForm({ title: "", slug: "", description: "", location: "", mapUrl: "", coverImageUrl: "", startsAt: "", endsAt: "", registrationDeadline: "", capacity: "" });
+                setForm({
+                    title: "",
+                    slug: "",
+                    category: DEFAULT_VOLUNTEER_EVENT_CATEGORY,
+                    description: "",
+                    location: "",
+                    mapUrl: "",
+                    coverImageUrl: "",
+                    startsAt: "",
+                    endsAt: "",
+                    registrationDeadline: "",
+                    capacity: "",
+                });
                 setIsOnlineEvent(false);
                 await fetchAdminData();
             } else {
@@ -296,9 +325,23 @@ export default function VolunteerAdminClient() {
                             placeholder="活動網址代號，例如 2026-1-31-diy"
                             className="w-full glass-input rounded-xl px-4 py-3"
                         />
+                        <label className="space-y-1 block">
+                            <span className="text-sm text-slate-300">活動分類</span>
+                            <select
+                                value={form.category}
+                                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+                                className="w-full glass-input rounded-xl px-4 py-3"
+                            >
+                                {VOLUNTEER_EVENT_CATEGORIES.map((category) => (
+                                    <option key={category.label} value={category.label} className="bg-[#173246] text-white">
+                                        {category.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm text-slate-300">活動封面圖</span>
+                                <span className="text-sm text-slate-300">活動封面圖（未上傳時使用分類預設圖）</span>
                                 {form.coverImageUrl && (
                                     <button
                                         type="button"
@@ -314,6 +357,12 @@ export default function VolunteerAdminClient() {
                                 <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={form.coverImageUrl} alt="活動封面預覽" className="h-40 w-full object-cover" />
+                                </div>
+                            )}
+                            {!form.coverImageUrl && (
+                                <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={getVolunteerEventCoverImage(form)} alt={`${form.category} 預設封面`} className="h-40 w-full object-cover" />
                                 </div>
                             )}
                             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">
@@ -448,8 +497,15 @@ export default function VolunteerAdminClient() {
                             <div className="space-y-4 max-h-[720px] overflow-y-auto pr-1">
                                 {events.map((event) => (
                                     <article key={event.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                        <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={getVolunteerEventCoverImage(event)} alt={event.title} className="h-36 w-full object-cover" />
+                                        </div>
                                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                                             <div>
+                                                <div className="mb-1 inline-flex rounded-full border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-2.5 py-1 text-xs font-semibold text-[#D9FFFF]">
+                                                    {event.category || DEFAULT_VOLUNTEER_EVENT_CATEGORY}
+                                                </div>
                                                 <h3 className="font-bold text-white">{event.title}</h3>
                                                 <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}｜{event.location || "線上活動"}</p>
                                             </div>

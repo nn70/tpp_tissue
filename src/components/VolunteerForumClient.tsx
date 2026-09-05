@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, User, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
+import { DEFAULT_VOLUNTEER_EVENT_CATEGORY, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -11,8 +12,10 @@ type VolunteerEvent = {
     id: string;
     slug: string | null;
     title: string;
+    category: string | null;
     description: string | null;
     location: string | null;
+    coverImageUrl: string | null;
     startsAt: string;
     endsAt: string | null;
     capacity: number | null;
@@ -241,8 +244,15 @@ export default function VolunteerForumClient() {
 
                             return (
                                 <article key={event.id} className="glass-panel rounded-2xl p-5 space-y-4">
+                                    <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={getVolunteerEventCoverImage(event)} alt={event.title} className="h-44 w-full object-cover" />
+                                    </div>
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
+                                            <div className="mb-2 inline-flex rounded-full border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-2.5 py-1 text-xs font-semibold text-[#D9FFFF]">
+                                                {event.category || DEFAULT_VOLUNTEER_EVENT_CATEGORY}
+                                            </div>
                                             <h2 className="text-xl font-bold text-white">{event.title}</h2>
                                             <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-400">
                                                 <span className="inline-flex items-center gap-1.5">

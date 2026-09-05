@@ -114,6 +114,7 @@ model VolunteerEvent {
   slug        String?  @unique
   checkInToken String? @unique
   title       String
+  category    String   @default("站路口")
   description String?
   location    String?
   mapUrl      String?
