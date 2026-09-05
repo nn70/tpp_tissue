@@ -236,7 +236,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                     報到電話：{registration?.phone || currentUserPhone}
                                 </p>
                             )}
-                            <p className="text-sm text-[#D9FFFF]/75 mt-2">活動結束後由後台確認出席，才會累計獎勵次數。</p>
+                            <p className="text-sm text-[#D9FFFF]/75 mt-2">活動結束後由後台確認出席，才會累計服務里程碑次數。</p>
                         </div>
                     ) : (
                         <div className="space-y-4">

@@ -27,7 +27,7 @@ export default function Navigation() {
                             <span className="text-white font-bold text-lg">眾</span>
                         </div>
                         <span className="text-white font-bold text-sm sm:text-base lg:text-lg tracking-wide hidden sm:block whitespace-nowrap">
-                            TPP松信區志工報名系統
+                            TPP志工報名系統
                         </span>
                     </div>
 
@@ -57,8 +57,8 @@ export default function Navigation() {
                             className={`${baseLinkClass} ${isRewards ? activeLinkClass : inactiveLinkClass}`}
                         >
                             <Award className="w-4 h-4" />
-                            <span className="hidden sm:inline">志工獎勵</span>
-                            <span className="sm:hidden">獎勵</span>
+                            <span className="hidden sm:inline">志工里程碑</span>
+                            <span className="sm:hidden">里程碑</span>
                         </Link>
 
                         {canManageContent && (

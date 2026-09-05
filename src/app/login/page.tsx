@@ -13,7 +13,7 @@ export default function LoginPage() {
                             <span className="text-white font-bold text-3xl">眾</span>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold mb-2">登入 TPP松信區志工報名系統</h1>
+                    <h1 className="text-2xl font-bold mb-2">登入 TPP志工報名系統</h1>
                     <p className="text-slate-400 text-sm">請使用您的 Google 帳號登入以存取系統功能</p>
                 </div>
 

@@ -552,7 +552,7 @@ export default function VolunteerAdminClient() {
                 <section className="glass-panel rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                         <Gift className="w-5 h-5 text-[#F4F7F7]" />
-                        <h2 className="text-xl font-bold">志工獎勵統計</h2>
+                        <h2 className="text-xl font-bold">志工里程碑統計</h2>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -561,7 +561,7 @@ export default function VolunteerAdminClient() {
                                     <th className="py-3 pr-4">志工</th>
                                     <th className="py-3 px-4">出席次數</th>
                                     <th className="py-3 px-4">已解鎖</th>
-                                    <th className="py-3 pl-4">下一個獎勵</th>
+                                    <th className="py-3 pl-4">下一個里程碑</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">

@@ -135,7 +135,7 @@ export default function VolunteerForumClient() {
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
                         <p className="text-slate-400 leading-7">
-                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30 次時會解鎖不同獎勵。
+                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30 次時會解鎖志工服務里程碑。
                         </p>
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
@@ -154,25 +154,25 @@ export default function VolunteerForumClient() {
                     <div className="glass-panel rounded-2xl p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <Gift className="w-5 h-5 text-[#F4F7F7]" />
-                            <h2 className="font-bold">我的獎勵進度</h2>
+                            <h2 className="font-bold">我的服務里程碑</h2>
                         </div>
                         <div className="text-4xl font-black text-white">{rewardProgress?.attendedCount ?? 0}</div>
                         <p className="text-sm text-slate-400 mt-1">已確認出席活動次數</p>
                         <div className="mt-5 rounded-xl bg-black/20 border border-white/10 p-4">
                             {rewardProgress?.next ? (
                                 <>
-                                    <div className="font-semibold text-slate-200">下一個目標：{rewardProgress.next.title}</div>
+                                    <div className="font-semibold text-slate-200">下一個里程碑：{rewardProgress.next.title}</div>
                                     <div className="text-sm text-slate-400 mt-1">再參加 {rewardProgress.remainingToNext} 次可解鎖</div>
                                 </>
                             ) : (
-                                <div className="font-semibold text-[#D9FFFF]">已達成所有獎勵門檻</div>
+                                <div className="font-semibold text-[#D9FFFF]">已達成所有里程碑</div>
                             )}
                         </div>
                         <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-[#D9FFFF] hover:text-white">
-                            查看完整獎勵說明
+                            查看完整里程碑說明
                         </Link>
                         <p className="mt-3 text-xs leading-5 text-slate-500">
-                            獎勵內容及規則以主辦方公告為準，主辦方保留調整獎項與兌換方式之權利。
+                            里程碑僅作為志工服務紀錄、感謝與培訓通知，不提供具財產價值之利益，且不得作為投票或助選行為之對價。
                         </p>
                     </div>
                 </section>

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TPP松信區志工報名系統 | 物資發放與志工活動平台",
-  description: "物資發放紀錄、志工活動報名、QR Code 報到與獎勵進度管理平台。",
+  title: "TPP志工報名系統 | 物資發放與志工活動平台",
+  description: "物資發放紀錄、志工活動報名、QR Code 報到與志工服務里程碑管理平台。",
 };
 
 export default function RootLayout({

@@ -1,8 +1,8 @@
 export const rewardMilestones = [
-    { times: 3, title: "民眾黨小物", description: "完成 3 次活動報到後可兌換民眾黨小物。" },
-    { times: 10, title: "民眾黨 T 恤", description: "完成 10 次活動報到後可兌換民眾黨 T 恤。" },
-    { times: 20, title: "參觀台北市黨部", description: "完成 20 次活動報到後可獲得參觀台北市黨部機會。" },
-    { times: 30, title: "與柯文哲合影機會", description: "完成 30 次活動報到後可獲得與柯文哲合影機會。" },
+    { times: 3, title: "志工服務徽章", description: "完成 3 次活動報到後，系統顯示志工服務徽章，作為參與紀錄與感謝。" },
+    { times: 10, title: "志工感謝狀", description: "完成 10 次活動報到後，可由主辦方核發不具財產價值之電子感謝狀。" },
+    { times: 20, title: "志工培訓邀請", description: "完成 20 次活動報到後，可優先收到志工培訓、法規說明或服務交流場次資訊。" },
+    { times: 30, title: "志工服務紀錄彙整", description: "完成 30 次活動報到後，可取得個人志工服務紀錄彙整，供本人留存參考。" },
 ];
 
 export function getRewardProgress(attendedCount: number) {
