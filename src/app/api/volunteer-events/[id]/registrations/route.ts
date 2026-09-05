@@ -20,13 +20,19 @@ export async function POST(request: Request, props: RouteParams) {
     try {
         const { id } = await props.params;
         const body = await request.json().catch(() => ({}));
+        const inputName = typeof body.name === "string" ? body.name.trim() : "";
         const note = typeof body.note === "string" ? body.note.trim() : "";
         const inputPhone = typeof body.phone === "string" ? body.phone.trim() : "";
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { phone: true },
+            select: { name: true, phone: true },
         });
+        const name = inputName || user?.name?.trim() || "";
         const phone = inputPhone || user?.phone || "";
+
+        if (!name) {
+            return NextResponse.json({ error: "Name required" }, { status: 400 });
+        }
 
         if (!phone || !isValidPhone(phone)) {
             return NextResponse.json({ error: "Phone required" }, { status: 400 });
@@ -65,21 +71,23 @@ export async function POST(request: Request, props: RouteParams) {
             create: {
                 eventId: id,
                 userId: session.user.id,
+                name,
                 phone: normalizedPhone,
                 status: nextStatus as any,
                 note: note || null,
-            },
+            } as any,
             update: {
                 status: (existingRegistration?.status === "ATTENDED" ? "ATTENDED" : nextStatus) as any,
+                name: (existingRegistration as any)?.name || name,
                 phone: existingRegistration?.phone || normalizedPhone,
                 note: note || existingRegistration?.note || null,
-            },
+            } as any,
         });
 
-        if (!user?.phone || normalizePhone(user.phone) !== normalizedPhone) {
+        if (!user?.name || user.name.trim() !== name || !user?.phone || normalizePhone(user.phone) !== normalizedPhone) {
             await prisma.user.update({
                 where: { id: session.user.id },
-                data: { phone: normalizedPhone },
+                data: { name, phone: normalizedPhone },
             });
         }
 

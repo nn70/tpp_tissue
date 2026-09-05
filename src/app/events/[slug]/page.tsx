@@ -30,9 +30,10 @@ export default async function EventPage({ params }: PageProps) {
                     id: true,
                     status: true,
                     userId: true,
+                    name: true,
                     note: true,
                     phone: true,
-                },
+                } as any,
             },
         },
     });
@@ -44,14 +45,14 @@ export default async function EventPage({ params }: PageProps) {
     const currentUserRegistration = session?.user
         ? event.registrations.find((registration) => registration.userId === session.user.id) ?? null
         : null;
-    const currentUserPhone = session?.user
-        ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { phone: true } }))?.phone ?? ""
-        : "";
+    const currentUserProfile = session?.user
+        ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, phone: true } })
+        : null;
 
     return (
         <EventDetailClient
             isLoggedIn={Boolean(session?.user)}
-            currentUserPhone={currentUserPhone}
+            currentUserProfile={currentUserProfile}
             event={{
                 id: event.id,
                 slug: event.slug,
@@ -68,7 +69,7 @@ export default async function EventPage({ params }: PageProps) {
                     registration.status === "REGISTERED" || registration.status === "ATTENDED"
                 )).length,
                 waitlistCount: event.registrations.filter((registration) => (registration.status as string) === "WAITLISTED").length,
-                currentUserRegistration,
+                currentUserRegistration: currentUserRegistration as any,
             }}
         />
     );

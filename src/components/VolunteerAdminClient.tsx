@@ -10,6 +10,7 @@ type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED"
 
 type AdminRegistration = {
     id: string;
+    name: string | null;
     note: string | null;
     phone: string | null;
     status: RegistrationStatus;
@@ -518,7 +519,7 @@ export default function VolunteerAdminClient() {
                                                 event.registrations.map((registration) => (
                                                     <div key={registration.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg bg-white/5 p-3">
                                                         <div>
-                                                            <div className="font-medium text-slate-200">{registration.user.name || "未命名志工"}</div>
+                                                            <div className="font-medium text-slate-200">{registration.name || registration.user.name || "未命名志工"}</div>
                                                             <div className="text-xs text-slate-400">{registration.user.email}</div>
                                                             <div className="text-xs text-slate-400">報名電話：{registration.phone || "未留電話"}</div>
                                                             {registration.note && <div className="text-xs text-slate-300 mt-1">備註：{registration.note}</div>}

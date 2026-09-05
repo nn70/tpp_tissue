@@ -133,6 +133,7 @@ model VolunteerRegistration {
   id        String                      @id @default(cuid())
   eventId   String
   userId    String
+  name      String?
   phone     String?
   note      String?
   status    VolunteerRegistrationStatus @default(REGISTERED)

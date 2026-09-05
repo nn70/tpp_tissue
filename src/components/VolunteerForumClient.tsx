@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, UserCheck, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, User, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
@@ -21,6 +21,7 @@ type VolunteerEvent = {
     currentUserRegistration: {
         id: string;
         status: RegistrationStatus;
+        name: string | null;
         note: string | null;
         phone: string | null;
     } | null;
@@ -39,6 +40,7 @@ export default function VolunteerForumClient() {
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
     const [notes, setNotes] = useState<Record<string, string>>({});
+    const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [message, setMessage] = useState<string | null>(null);
 
@@ -49,7 +51,8 @@ export default function VolunteerForumClient() {
                 const data = await res.json();
                 setEvents(data.events);
                 setRewardProgress(data.rewardProgress);
-                setPhone(data.currentUserPhone ?? "");
+                setName(data.currentUserProfile?.name ?? "");
+                setPhone(data.currentUserProfile?.phone ?? "");
             }
         } finally {
             setLoading(false);
@@ -69,8 +72,8 @@ export default function VolunteerForumClient() {
         setSavingId(eventId);
         setMessage(null);
 
-        if (!phone.trim()) {
-            setMessage("請先填寫聯絡電話，方便活動前聯絡與現場報到確認。");
+        if (!name.trim() || !phone.trim()) {
+            setMessage("請先填寫姓名與聯絡電話，方便活動前聯絡與現場報到確認。");
             setSavingId(null);
             return;
         }
@@ -79,7 +82,7 @@ export default function VolunteerForumClient() {
             const res = await fetch(`/api/volunteer-events/${eventId}/registrations`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note: notes[eventId] ?? "", phone }),
+                body: JSON.stringify({ name, note: notes[eventId] ?? "", phone }),
             });
 
             if (!res.ok) {
@@ -182,19 +185,34 @@ export default function VolunteerForumClient() {
                         <div>
                             <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
                                 <Phone className="w-4 h-4 text-[#61C5C7]" />
-                                志工聯絡電話
+                                志工個人資料
                             </div>
                             <p className="mt-1 text-xs leading-5 text-slate-400">
-                                第一次報名請留下電話，之後系統會自動帶出；現場 QR 報到需輸入相同電話。
+                                第一次報名請留下姓名與電話，之後系統會自動帶出；現場 QR 報到需輸入相同電話。
                             </p>
                         </div>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="請輸入手機或聯絡電話"
-                            className="w-full sm:max-w-xs glass-input rounded-xl px-4 py-3"
-                        />
+                        <div className="grid w-full gap-2 sm:max-w-xl sm:grid-cols-2">
+                            <label className="relative">
+                                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="請輸入姓名"
+                                    className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
+                                />
+                            </label>
+                            <label className="relative">
+                                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="請輸入手機或聯絡電話"
+                                    className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
+                                />
+                            </label>
+                        </div>
                     </div>
                 </section>
 
@@ -255,6 +273,7 @@ export default function VolunteerForumClient() {
                                     {isRegistered && (
                                         <div className={`rounded-xl border px-3 py-2 text-sm ${isWaitlisted ? "border-amber-300/30 bg-amber-400/10 text-amber-100" : "border-[#61C5C7]/20 bg-[#61C5C7]/10 text-[#D9FFFF]"}`}>
                                             {isWaitlisted && <div className="mb-1 font-semibold">目前為候補報名，候補名額不限。</div>}
+                                            報名姓名：{event.currentUserRegistration?.name || name || "尚未登記"}<br />
                                             報到電話：{event.currentUserRegistration?.phone || phone || "尚未登記，請聯絡工作人員補登"}
                                         </div>
                                     )}

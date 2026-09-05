@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, UserCheck } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, User, UserCheck } from "lucide-react";
 import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
@@ -24,6 +24,7 @@ type EventDetail = {
     currentUserRegistration: {
         id: string;
         status: RegistrationStatus;
+        name: string | null;
         note: string | null;
         phone: string | null;
     } | null;
@@ -32,7 +33,7 @@ type EventDetail = {
 type Props = {
     event: EventDetail;
     isLoggedIn: boolean;
-    currentUserPhone: string;
+    currentUserProfile: { name: string | null; phone: string | null } | null;
 };
 
 function getEventStatus(event: EventDetail) {
@@ -56,9 +57,10 @@ function formatDateTime(value: string) {
     }).format(new Date(value));
 }
 
-export default function EventDetailClient({ event, isLoggedIn, currentUserPhone }: Props) {
+export default function EventDetailClient({ event, isLoggedIn, currentUserProfile }: Props) {
     const [note, setNote] = useState(event.currentUserRegistration?.note ?? "");
-    const [phone, setPhone] = useState(event.currentUserRegistration?.phone ?? currentUserPhone);
+    const [name, setName] = useState(event.currentUserRegistration?.name ?? currentUserProfile?.name ?? "");
+    const [phone, setPhone] = useState(event.currentUserRegistration?.phone ?? currentUserProfile?.phone ?? "");
     const [registration, setRegistration] = useState(event.currentUserRegistration);
     const [registrationCount, setRegistrationCount] = useState(event.registrationCount);
     const [waitlistCount, setWaitlistCount] = useState(event.waitlistCount);
@@ -77,8 +79,8 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
         setSaving(true);
         setMessage(null);
 
-        if (!phone.trim()) {
-            setMessage("請先填寫聯絡電話，方便活動前聯絡與現場報到確認。");
+        if (!name.trim() || !phone.trim()) {
+            setMessage("請先填寫姓名與聯絡電話，方便活動前聯絡與現場報到確認。");
             setSaving(false);
             return;
         }
@@ -87,7 +89,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
             const res = await fetch(`/api/volunteer-events/${event.id}/registrations`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note, phone }),
+                body: JSON.stringify({ name, note, phone }),
             });
 
             if (!res.ok) {
@@ -218,9 +220,10 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                 <CheckCircle2 className="w-5 h-5" />
                                 你已完成候補報名
                             </div>
-                            {(registration?.phone || currentUserPhone) && (
+                            {(registration?.phone || currentUserProfile?.phone) && (
                                 <p className="text-sm text-amber-100/80 mt-2">
-                                    報到電話：{registration?.phone || currentUserPhone}
+                                    報名姓名：{registration?.name || currentUserProfile?.name || "尚未登記"}<br />
+                                    報到電話：{registration?.phone || currentUserProfile?.phone}
                                 </p>
                             )}
                             <p className="text-sm text-amber-100/75 mt-2">候補名額不限；若有名額釋出，將由主辦方通知。</p>
@@ -231,9 +234,10 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                 <CheckCircle2 className="w-5 h-5" />
                                 你已完成報名
                             </div>
-                            {(registration?.phone || currentUserPhone) && (
+                            {(registration?.phone || currentUserProfile?.phone) && (
                                 <p className="text-sm text-[#D9FFFF]/75 mt-2">
-                                    報到電話：{registration?.phone || currentUserPhone}
+                                    報名姓名：{registration?.name || currentUserProfile?.name || "尚未登記"}<br />
+                                    報到電話：{registration?.phone || currentUserProfile?.phone}
                                 </p>
                             )}
                             <p className="text-sm text-[#D9FFFF]/75 mt-2">活動結束後由後台確認出席，才會累計服務里程碑次數。</p>
@@ -243,6 +247,20 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                             <div className="text-sm text-slate-400">
                                 已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
                                 {waitlistCount > 0 ? `，候補 ${waitlistCount} 人` : ""}
+                            </div>
+                            <div>
+                                <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                                    <User className="w-4 h-4 text-[#61C5C7]" />
+                                    姓名
+                                </label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="請輸入姓名"
+                                    className="w-full glass-input rounded-xl px-4 py-3"
+                                    required
+                                />
                             </div>
                             <div>
                                 <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
@@ -258,7 +276,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserPhone 
                                     required
                                 />
                                 <p className="mt-2 text-xs leading-5 text-slate-400">
-                                    第一次報名會保存此電話，之後報名會自動帶出；現場 QR 報到時需輸入相同電話。
+                                    第一次報名會保存姓名與電話，之後報名會自動帶出；現場 QR 報到時需輸入相同電話。
                                 </p>
                             </div>
                             <textarea
