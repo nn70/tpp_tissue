@@ -35,13 +35,7 @@ export async function POST(request: Request, props: RouteParams) {
             return NextResponse.json({ error: "Registration closed" }, { status: 400 });
         }
 
-        const activeRegistrationCount = event.registrations.filter((registration) => registration.status !== "CANCELLED").length;
         const existingRegistration = event.registrations.find((registration) => registration.userId === session.user.id);
-
-        const alreadyActive = existingRegistration?.status === "REGISTERED" || existingRegistration?.status === "ATTENDED";
-        if (event.capacity && activeRegistrationCount >= event.capacity && !alreadyActive) {
-            return NextResponse.json({ error: "Event is full" }, { status: 400 });
-        }
 
         const registration = await prisma.volunteerRegistration.upsert({
             where: {

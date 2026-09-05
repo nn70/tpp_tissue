@@ -132,12 +132,10 @@ export default function VolunteerForumClient() {
                                     <CalendarDays className="w-4 h-4 text-blue-300" />
                                     下一場：{formatDateTime(nextEvent.startsAt)}
                                 </span>
-                                {nextEvent.location && (
-                                    <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-                                        <MapPin className="w-4 h-4 text-emerald-300" />
-                                        {nextEvent.location}
-                                    </span>
-                                )}
+                                <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                                    <MapPin className="w-4 h-4 text-emerald-300" />
+                                    {nextEvent.location || "線上活動"}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -182,7 +180,6 @@ export default function VolunteerForumClient() {
                         {events.map((event) => {
                             const status = event.currentUserRegistration?.status;
                             const isRegistered = status === "REGISTERED" || status === "ATTENDED";
-                            const isFull = Boolean(event.capacity && event.registrationCount >= event.capacity && !isRegistered);
 
                             return (
                                 <article key={event.id} className="glass-panel rounded-2xl p-5 space-y-4">
@@ -194,12 +191,10 @@ export default function VolunteerForumClient() {
                                                     <CalendarDays className="w-4 h-4" />
                                                     {formatDateTime(event.startsAt)}
                                                 </span>
-                                                {event.location && (
-                                                    <span className="inline-flex items-center gap-1.5">
-                                                        <MapPin className="w-4 h-4" />
-                                                        {event.location}
-                                                    </span>
-                                                )}
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <MapPin className="w-4 h-4" />
+                                                    {event.location || "線上活動"}
+                                                </span>
                                             </div>
                                         </div>
                                         {status === "ATTENDED" && <CheckCircle2 className="w-6 h-6 text-emerald-300 shrink-0" />}
@@ -208,7 +203,7 @@ export default function VolunteerForumClient() {
                                     {event.description && <p className="text-sm text-slate-300 leading-6">{event.description}</p>}
 
                                     <div className="text-sm text-slate-400">
-                                        已報名 {event.registrationCount}{event.capacity ? ` / ${event.capacity}` : ""} 人
+                                        已報名 {event.registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
                                     </div>
 
                                     {!isRegistered && (
@@ -240,11 +235,11 @@ export default function VolunteerForumClient() {
                                             <button
                                                 type="button"
                                                 onClick={() => register(event)}
-                                                disabled={savingId === event.id || isFull}
+                                                disabled={savingId === event.id}
                                                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
                                             >
                                                 {savingId === event.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                                                {isFull ? "名額已滿" : "我要報名"}
+                                                我要報名
                                             </button>
                                         )}
                                     </div>

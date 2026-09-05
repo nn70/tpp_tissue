@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Gift, ImagePlus, Link2, Loader2, RefreshCw, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Gift, ImagePlus, Link2, Loader2, Monitor, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
@@ -60,6 +60,7 @@ export default function VolunteerAdminClient() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
+    const [isOnlineEvent, setIsOnlineEvent] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [form, setForm] = useState({
         title: "",
@@ -111,6 +112,8 @@ export default function VolunteerAdminClient() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...form,
+                    location: isOnlineEvent ? "" : form.location,
+                    mapUrl: isOnlineEvent ? "" : form.mapUrl,
                     capacity: form.capacity ? Number(form.capacity) : null,
                     endsAt: form.endsAt || null,
                 }),
@@ -118,6 +121,7 @@ export default function VolunteerAdminClient() {
 
             if (res.ok) {
                 setForm({ title: "", slug: "", description: "", location: "", mapUrl: "", coverImageUrl: "", startsAt: "", endsAt: "", registrationDeadline: "", capacity: "" });
+                setIsOnlineEvent(false);
                 await fetchAdminData();
             } else {
                 alert("建立活動失敗，請確認必填欄位。");
@@ -280,21 +284,41 @@ export default function VolunteerAdminClient() {
                             placeholder="活動說明"
                             className="w-full min-h-24 glass-input rounded-xl px-4 py-3"
                         />
-                        <div className="space-y-1">
-                            <span className="text-sm text-slate-300">集合地點</span>
-                            <AddressInput
-                                defaultValue={form.location}
-                                onPlaceSelected={handlePlaceSelected}
-                                onInputChange={(value) => setForm((prev) => ({ ...prev, location: value }))}
-                                placeholder="輸入地點或地址，例如：虎林"
+                        <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+                            <input
+                                type="checkbox"
+                                checked={isOnlineEvent}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setIsOnlineEvent(checked);
+                                    if (checked) {
+                                        setForm((prev) => ({ ...prev, location: "", mapUrl: "" }));
+                                    }
+                                }}
+                                className="h-4 w-4 accent-blue-500"
                             />
-                        </div>
-                        <input
-                            value={form.mapUrl}
-                            onChange={(e) => setForm((prev) => ({ ...prev, mapUrl: e.target.value }))}
-                            placeholder="Google Maps 連結，可留空"
-                            className="w-full glass-input rounded-xl px-4 py-3"
-                        />
+                            <Monitor className="h-4 w-4 text-blue-300" />
+                            線上活動
+                        </label>
+                        {!isOnlineEvent && (
+                            <>
+                                <div className="space-y-1">
+                                    <span className="text-sm text-slate-300">集合地點</span>
+                                    <AddressInput
+                                        defaultValue={form.location}
+                                        onPlaceSelected={handlePlaceSelected}
+                                        onInputChange={(value) => setForm((prev) => ({ ...prev, location: value }))}
+                                        placeholder="輸入地點或地址，例如：虎林"
+                                    />
+                                </div>
+                                <input
+                                    value={form.mapUrl}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                                    placeholder="Google Maps 連結，可留空"
+                                    className="w-full glass-input rounded-xl px-4 py-3"
+                                />
+                            </>
+                        )}
                         <div className="grid sm:grid-cols-2 gap-3">
                             <label className="space-y-1">
                                 <span className="text-sm text-slate-300">開始時間</span>
@@ -325,14 +349,17 @@ export default function VolunteerAdminClient() {
                                 className="w-full glass-input rounded-xl px-4 py-3"
                             />
                         </label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={form.capacity}
-                            onChange={(e) => setForm((prev) => ({ ...prev, capacity: e.target.value }))}
-                            placeholder="名額上限，空白代表不限"
-                            className="w-full glass-input rounded-xl px-4 py-3"
-                        />
+                        <label className="space-y-1 block">
+                            <span className="text-sm text-slate-300">預期人數（選填）</span>
+                            <input
+                                type="number"
+                                min="1"
+                                value={form.capacity}
+                                onChange={(e) => setForm((prev) => ({ ...prev, capacity: e.target.value }))}
+                                placeholder="手動輸入預期人數"
+                                className="w-full glass-input rounded-xl px-4 py-3"
+                            />
+                        </label>
                         <button
                             disabled={saving}
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-4 py-3 font-semibold transition"
@@ -367,12 +394,12 @@ export default function VolunteerAdminClient() {
                                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                                             <div>
                                                 <h3 className="font-bold text-white">{event.title}</h3>
-                                                <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}{event.location ? `｜${event.location}` : ""}</p>
+                                                <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}｜{event.location || "線上活動"}</p>
                                             </div>
                                             <div className="flex flex-col items-start sm:items-end gap-2">
                                                 <span className="text-xs text-slate-400">
                                                     {event.registrations.filter((registration) => registration.status !== "CANCELLED").length}
-                                                    {event.capacity ? ` / ${event.capacity}` : ""} 人
+                                                    {event.capacity ? ` / 預期 ${event.capacity}` : ""} 人
                                                 </span>
                                                 <Link
                                                     href={`/events/${event.slug || event.id}`}

@@ -63,7 +63,6 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
     const closesAt = new Date(event.registrationDeadline ?? event.startsAt).getTime();
     const isClosed = closesAt < Date.now() || new Date(event.startsAt).getTime() < Date.now();
     const isRegistered = registration?.status === "REGISTERED" || registration?.status === "ATTENDED";
-    const isFull = Boolean(event.capacity && registrationCount >= event.capacity && !isRegistered);
     const mapQuery = event.location || event.mapUrl;
     const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
 
@@ -136,6 +135,10 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                         </div>
                     </div>
 
+                    <div className="mt-5 rounded-xl bg-black/20 border border-white/10 p-4 text-sm text-slate-300">
+                        已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
+                    </div>
+
                     {mapEmbedUrl && (
                         <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/20">
                             <iframe
@@ -201,7 +204,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                     ) : (
                         <div className="space-y-4">
                             <div className="text-sm text-slate-400">
-                                已報名 {registrationCount}{event.capacity ? ` / ${event.capacity}` : ""} 人
+                                已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
                             </div>
                             <textarea
                                 value={note}
@@ -212,11 +215,11 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                             <button
                                 type="button"
                                 onClick={submitRegistration}
-                                disabled={saving || isFull}
+                                disabled={saving}
                                 className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-6 py-3 font-semibold transition"
                             >
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                                {isFull ? "名額已滿" : "送出報名"}
+                                送出報名
                             </button>
                         </div>
                     )}
