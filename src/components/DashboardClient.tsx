@@ -171,8 +171,38 @@ export default function DashboardClient() {
         }
     };
 
-    // 開啟 Google Calendar 建立提醒事件
-    const openGoogleCalendar = (eventDate: string, locationName: string, address: string) => {
+    // 建立 Google Calendar 提醒事件；若授權不足，改用 Google Calendar 範本頁作為備援。
+    const createGoogleCalendarReminder = async (
+        eventDate: string,
+        locationName: string,
+        address: string,
+        reminderContactName?: string | null,
+        reminderContactPhone?: string | null,
+    ) => {
+        try {
+            const res = await fetch("/api/calendar/reminders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    date: eventDate,
+                    locationName,
+                    address,
+                    contactName: reminderContactName,
+                    contactPhone: reminderContactPhone,
+                }),
+            });
+
+            if (res.ok) {
+                return;
+            }
+
+            const err = await res.json().catch(() => ({}));
+            alert(`Google Calendar 自動建立失敗：${err.error || "未知錯誤"}。將開啟手動建立頁面。`);
+        } catch (error) {
+            console.error(error);
+            alert("Google Calendar 自動建立失敗，將開啟手動建立頁面。");
+        }
+
         const d = new Date(eventDate);
         const startDate = d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         const endD = new Date(d.getTime() + 60 * 60 * 1000);
@@ -284,7 +314,7 @@ export default function DashboardClient() {
             if (res.ok) {
                 // 如果有勾選「建立 Google Calendar」且有設定下次聯絡日
                 if (addToCalendar && nextContactDate && finalType === "SUPPLY") {
-                    openGoogleCalendar(nextContactDate, newName, newAddress);
+                    await createGoogleCalendarReminder(nextContactDate, newName, newAddress, contactName, contactPhone);
                 }
                 setIsAddingNew(false);
                 setIsAddingBillboard(false);
@@ -318,7 +348,13 @@ export default function DashboardClient() {
                 // 如果有勾選且有設定下次聯絡日
                 if (recordAddToCalendar && recordNextContactDate) {
                     const loc = locations.find(l => l.id === locationId);
-                    openGoogleCalendar(recordNextContactDate, (loc as any)?.name || '', loc?.address || '');
+                    await createGoogleCalendarReminder(
+                        recordNextContactDate,
+                        (loc as any)?.name || '',
+                        loc?.address || '',
+                        (loc as any)?.contactName,
+                        loc?.contactPhone,
+                    );
                 }
                 setAddingRecordTo(null);
                 setRecordItemType("面紙");
