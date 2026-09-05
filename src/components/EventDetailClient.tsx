@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, UserCheck } from "lucide-react";
+import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 
@@ -52,22 +53,6 @@ function formatDateTime(value: string) {
     }).format(new Date(value));
 }
 
-function buildCalendarUrl(event: EventDetail) {
-    const start = new Date(event.startsAt).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    const endDate = event.endsAt ? new Date(event.endsAt) : new Date(new Date(event.startsAt).getTime() + 2 * 60 * 60 * 1000);
-    const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-
-    const params = new URLSearchParams({
-        action: "TEMPLATE",
-        text: event.title,
-        dates: `${start}/${end}`,
-        details: event.description ?? "",
-        location: event.location ?? "",
-    });
-
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
 export default function EventDetailClient({ event, isLoggedIn }: Props) {
     const [note, setNote] = useState(event.currentUserRegistration?.note ?? "");
     const [registration, setRegistration] = useState(event.currentUserRegistration);
@@ -102,6 +87,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
             setRegistration(data);
             setRegistrationCount((count) => count + (isRegistered ? 0 : 1));
             setMessage("報名成功，後台已可追蹤你的參與紀錄。");
+            askToAddGoogleCalendar(event);
         } finally {
             setSaving(false);
         }
@@ -116,6 +102,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
 
                 {event.coverImageUrl && (
                     <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30 mb-6">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={event.coverImageUrl} alt={event.title} className="w-full max-h-[420px] object-cover" />
                     </div>
                 )}
@@ -155,7 +142,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                                 查看地圖
                             </a>
                         )}
-                        <a href={buildCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold transition">
+                        <a href={buildGoogleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold transition">
                             <ExternalLink className="w-4 h-4" />
                             加入 Google 行事曆
                         </a>

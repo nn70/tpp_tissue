@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, UserCheck, Users } from "lucide-react";
+import { askToAddGoogleCalendar } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 
@@ -59,7 +60,8 @@ export default function VolunteerForumClient() {
         return events.find((event) => new Date(event.startsAt).getTime() >= Date.now()) ?? events[0] ?? null;
     }, [events]);
 
-    const register = async (eventId: string) => {
+    const register = async (event: VolunteerEvent) => {
+        const eventId = event.id;
         setSavingId(eventId);
         setMessage(null);
 
@@ -77,6 +79,7 @@ export default function VolunteerForumClient() {
             }
 
             setMessage("報名成功，後台已可追蹤你的參與紀錄。");
+            askToAddGoogleCalendar(event);
             await fetchEvents();
         } finally {
             setSavingId(null);
@@ -236,7 +239,7 @@ export default function VolunteerForumClient() {
                                         ) : (
                                             <button
                                                 type="button"
-                                                onClick={() => register(event.id)}
+                                                onClick={() => register(event)}
                                                 disabled={savingId === event.id || isFull}
                                                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
                                             >
