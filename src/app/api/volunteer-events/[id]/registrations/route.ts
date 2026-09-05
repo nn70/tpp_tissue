@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidPhone, normalizePhone } from "@/lib/phone";
+import { updateUserProfileWithLog } from "@/lib/userProfileChanges";
 
 interface RouteParams {
     params: Promise<{
@@ -84,12 +85,11 @@ export async function POST(request: Request, props: RouteParams) {
             } as any,
         });
 
-        if (!user?.name || user.name.trim() !== name || !user?.phone || normalizePhone(user.phone) !== normalizedPhone) {
-            await prisma.user.update({
-                where: { id: session.user.id },
-                data: { name, phone: normalizedPhone },
-            });
-        }
+        await updateUserProfileWithLog(session.user.id, {
+            name,
+            phone: normalizedPhone,
+            source: "event-registration",
+        });
 
         return NextResponse.json(registration, { status: 201 });
     } catch (error) {

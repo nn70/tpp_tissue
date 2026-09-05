@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Clock, Copy, Gift, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Clock, Copy, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 import { VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
@@ -54,6 +54,15 @@ type VolunteerStats = {
     next: { times: number; title: string; description: string } | null;
     remainingToNext: number;
     unlocked: { times: number; title: string; description: string }[];
+    profileChangeLogs: {
+        id: string;
+        oldName: string | null;
+        newName: string | null;
+        oldPhone: string | null;
+        newPhone: string | null;
+        source: string | null;
+        createdAt: string;
+    }[];
 };
 
 type EventFormState = {
@@ -87,6 +96,7 @@ export default function VolunteerAdminClient() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [qrEventId, setQrEventId] = useState<string | null>(null);
     const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
+    const [expandedProfileUserId, setExpandedProfileUserId] = useState<string | null>(null);
     const [form, setForm] = useState<EventFormState>({
         title: "",
         slug: "",
@@ -283,6 +293,12 @@ export default function VolunteerAdminClient() {
             hour: "2-digit",
             minute: "2-digit",
         }).format(new Date(value));
+    };
+
+    const profileSourceLabel = (source: string | null) => {
+        if (source === "event-registration") return "報名時更新";
+        if (source === "volunteer-profile") return "個人資料頁更新";
+        return "資料更新";
     };
 
     return (
@@ -636,33 +652,79 @@ export default function VolunteerAdminClient() {
                                     <th className="py-3 px-4">出席次數</th>
                                     <th className="py-3 px-4">已解鎖</th>
                                     <th className="py-3 pl-4">下一個里程碑</th>
+                                    <th className="py-3 pl-4">修改紀錄</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {volunteers.map((volunteer) => (
-                                    <tr key={volunteer.id}>
-                                        <td className="py-4 pr-4">
-                                            <div className="font-medium text-slate-200">{volunteer.name || "未命名志工"}</div>
-                                            <div className="text-xs text-slate-400">{volunteer.email}</div>
-                                            <div className="text-xs text-slate-400">電話：{volunteer.phone || "未留電話"}</div>
-                                        </td>
-                                        <td className="py-4 px-4 font-bold">{volunteer.attendedCount}</td>
-                                        <td className="py-4 px-4 text-sm text-slate-300">
-                                            {volunteer.unlocked.length > 0 ? volunteer.unlocked.map((reward) => reward.title).join("、") : "尚未解鎖"}
-                                        </td>
-                                        <td className="py-4 pl-4 text-sm text-slate-300">
-                                            {volunteer.next ? `再 ${volunteer.remainingToNext} 次：${volunteer.next.title}` : (
-                                                <span className="inline-flex items-center gap-1 text-[#61C5C7]">
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                    全部達成
-                                                </span>
+                                {volunteers.map((volunteer) => {
+                                    const isExpanded = expandedProfileUserId === volunteer.id;
+                                    const latestLog = volunteer.profileChangeLogs[0] ?? null;
+
+                                    return (
+                                        <Fragment key={volunteer.id}>
+                                            <tr>
+                                                <td className="py-4 pr-4">
+                                                    <div className="font-medium text-slate-200">{volunteer.name || "未命名志工"}</div>
+                                                    <div className="text-xs text-slate-400">{volunteer.email}</div>
+                                                    <div className="text-xs text-slate-400">電話：{volunteer.phone || "未留電話"}</div>
+                                                </td>
+                                                <td className="py-4 px-4 font-bold">{volunteer.attendedCount}</td>
+                                                <td className="py-4 px-4 text-sm text-slate-300">
+                                                    {volunteer.unlocked.length > 0 ? volunteer.unlocked.map((reward) => reward.title).join("、") : "尚未解鎖"}
+                                                </td>
+                                                <td className="py-4 pl-4 text-sm text-slate-300">
+                                                    {volunteer.next ? `再 ${volunteer.remainingToNext} 次：${volunteer.next.title}` : (
+                                                        <span className="inline-flex items-center gap-1 text-[#61C5C7]">
+                                                            <CheckCircle2 className="w-4 h-4" />
+                                                            全部達成
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-4 pl-4 text-sm text-slate-300">
+                                                    {latestLog ? (
+                                                        <div className="space-y-2">
+                                                            <div className="text-xs text-slate-400">最近：{formatDateTime(latestLog.createdAt)}</div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpandedProfileUserId(isExpanded ? null : volunteer.id)}
+                                                                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-[#D9FFFF] transition hover:bg-white/15"
+                                                            >
+                                                                <History className="h-3.5 w-3.5" />
+                                                                {isExpanded ? "收合" : `查看 ${volunteer.profileChangeLogs.length} 筆`}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-500">尚無修改</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && (
+                                            <tr>
+                                                    <td colSpan={5} className="pb-4">
+                                                        <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                                            <div className="mb-3 text-sm font-semibold text-slate-200">姓名與電話修改紀錄</div>
+                                                            <div className="space-y-3">
+                                                                {volunteer.profileChangeLogs.map((log) => (
+                                                                    <div key={log.id} className="rounded-lg bg-white/5 p-3 text-xs text-slate-300">
+                                                                        <div className="mb-2 flex flex-wrap items-center gap-2 text-slate-400">
+                                                                            <span>{formatDateTime(log.createdAt)}</span>
+                                                                            <span className="rounded-full bg-[#61C5C7]/10 px-2 py-0.5 text-[#D9FFFF]">{profileSourceLabel(log.source)}</span>
+                                                                        </div>
+                                                                        <div>姓名：{log.oldName || "未填"} → {log.newName || "未填"}</div>
+                                                                        <div className="mt-1">電話：{log.oldPhone || "未填"} → {log.newPhone || "未填"}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                        </Fragment>
+                                    );
+                                })}
                                 {volunteers.length === 0 && (
                                     <tr>
-                                        <td colSpan={4} className="py-10 text-center text-slate-400">尚無志工紀錄。</td>
+                                        <td colSpan={5} className="py-10 text-center text-slate-400">尚無志工紀錄。</td>
                                     </tr>
                                 )}
                             </tbody>

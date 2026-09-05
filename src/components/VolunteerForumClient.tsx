@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, User, UserCheck, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, Save, User, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
 import { getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 
@@ -45,6 +45,9 @@ export default function VolunteerForumClient() {
     const [notes, setNotes] = useState<Record<string, string>>({});
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [savedName, setSavedName] = useState("");
+    const [savedPhone, setSavedPhone] = useState("");
+    const [profileSaving, setProfileSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
 
     const fetchEvents = async () => {
@@ -54,8 +57,12 @@ export default function VolunteerForumClient() {
                 const data = await res.json();
                 setEvents(data.events);
                 setRewardProgress(data.rewardProgress);
-                setName(data.currentUserProfile?.name ?? "");
-                setPhone(data.currentUserProfile?.phone ?? "");
+                const profileName = data.currentUserProfile?.name ?? "";
+                const profilePhone = data.currentUserProfile?.phone ?? "";
+                setName(profileName);
+                setPhone(profilePhone);
+                setSavedName(profileName);
+                setSavedPhone(profilePhone);
             }
         } finally {
             setLoading(false);
@@ -69,6 +76,55 @@ export default function VolunteerForumClient() {
     const nextEvent = useMemo(() => {
         return events.find((event) => new Date(event.startsAt).getTime() >= Date.now()) ?? events[0] ?? null;
     }, [events]);
+    const profileChanged = name.trim() !== savedName.trim() || phone.trim() !== savedPhone.trim();
+
+    const saveProfile = async () => {
+        setProfileSaving(true);
+        setMessage(null);
+
+        if (!name.trim() || !phone.trim()) {
+            setMessage("請填寫姓名與聯絡電話後再儲存。");
+            setProfileSaving(false);
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/volunteer-profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, phone }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                setMessage(error.error === "Phone required" ? "請輸入有效的聯絡電話。" : error.error || "資料儲存失敗，請稍後再試。");
+                return;
+            }
+
+            const data = await res.json();
+            setSavedName(data.user.name ?? "");
+            setSavedPhone(data.user.phone ?? "");
+            setName(data.user.name ?? "");
+            setPhone(data.user.phone ?? "");
+            setEvents((currentEvents) => currentEvents.map((event) => {
+                if (!event.currentUserRegistration || event.currentUserRegistration.status === "ATTENDED" || event.currentUserRegistration.status === "CANCELLED") {
+                    return event;
+                }
+
+                return {
+                    ...event,
+                    currentUserRegistration: {
+                        ...event.currentUserRegistration,
+                        name: data.user.name ?? "",
+                        phone: data.user.phone ?? "",
+                    },
+                };
+            }));
+            setMessage(data.changed ? "個人資料已更新，後台已保存修改紀錄。" : "個人資料沒有變更。");
+        } finally {
+            setProfileSaving(false);
+        }
+    };
 
     const register = async (event: VolunteerEvent) => {
         const eventId = event.id;
@@ -194,8 +250,8 @@ export default function VolunteerForumClient() {
                                 第一次報名請留下姓名與電話，之後系統會自動帶出；現場 QR 報到需輸入相同電話。
                             </p>
                         </div>
-                        <div className="grid w-full gap-2 sm:max-w-xl sm:grid-cols-2">
-                            <label className="relative">
+                        <div className="grid w-full gap-2 sm:max-w-2xl sm:grid-cols-[1fr_1fr_auto]">
+                            <label className="relative min-w-0">
                                 <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
                                 <input
                                     type="text"
@@ -205,7 +261,7 @@ export default function VolunteerForumClient() {
                                     className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
                                 />
                             </label>
-                            <label className="relative">
+                            <label className="relative min-w-0">
                                 <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61C5C7]" />
                                 <input
                                     type="tel"
@@ -215,6 +271,15 @@ export default function VolunteerForumClient() {
                                     className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
                                 />
                             </label>
+                            <button
+                                type="button"
+                                onClick={saveProfile}
+                                disabled={profileSaving || !profileChanged}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button px-4 py-3 text-sm font-semibold disabled:opacity-50"
+                            >
+                                {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                儲存資料
+                            </button>
                         </div>
                     </div>
                 </section>

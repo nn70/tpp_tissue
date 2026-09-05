@@ -5,6 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { canManageContent } from "@/lib/permissions";
 import { getRewardProgress } from "@/lib/volunteerRewards";
 
+type ProfileChangeLog = {
+    id: string;
+    userId: string;
+    oldName: string | null;
+    newName: string | null;
+    oldPhone: string | null;
+    newPhone: string | null;
+    source: string | null;
+    createdAt: Date;
+};
+
 export async function GET() {
     const session = await getServerSession(authOptions);
 
@@ -52,6 +63,26 @@ export async function GET() {
             orderBy: { name: "asc" },
         }),
     ]);
+    const profileChangeLogs = await (prisma as any).userProfileChangeLog.findMany({
+        where: {
+            userId: { in: volunteers.map((volunteer) => volunteer.id) },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+            id: true,
+            userId: true,
+            oldName: true,
+            newName: true,
+            oldPhone: true,
+            newPhone: true,
+            source: true,
+            createdAt: true,
+        },
+    }) as ProfileChangeLog[];
+    const logsByUserId = profileChangeLogs.reduce((acc: Record<string, ProfileChangeLog[]>, log) => {
+        acc[log.userId] = [...(acc[log.userId] ?? []), log].slice(0, 10);
+        return acc;
+    }, {});
 
     return NextResponse.json({
         events,
@@ -61,6 +92,7 @@ export async function GET() {
             email: volunteer.email,
             image: volunteer.image,
             phone: volunteer.phone,
+            profileChangeLogs: logsByUserId[volunteer.id] ?? [],
             ...getRewardProgress(volunteer.volunteerRegistrations.length),
         })),
     });

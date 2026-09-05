@@ -65,6 +65,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   volunteerRegistrations VolunteerRegistration[]
+  profileChangeLogs UserProfileChangeLog[]
 }
 
 model VerificationToken {
@@ -146,4 +147,17 @@ model VolunteerRegistration {
   user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
+}
+
+model UserProfileChangeLog {
+  id            String   @id @default(cuid())
+  userId        String
+  oldName       String?
+  newName       String?
+  oldPhone      String?
+  newPhone      String?
+  source        String?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
