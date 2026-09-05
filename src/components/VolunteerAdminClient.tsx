@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarPlus, CheckCircle2, Gift, Link2, Loader2, RefreshCw, Users } from "lucide-react";
+import imageCompression from "browser-image-compression";
+import { CalendarPlus, CheckCircle2, Gift, ImagePlus, Link2, Loader2, RefreshCw, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
@@ -58,6 +59,7 @@ export default function VolunteerAdminClient() {
     const [volunteers, setVolunteers] = useState<VolunteerStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploadingCover, setUploadingCover] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [form, setForm] = useState({
         title: "",
@@ -97,6 +99,7 @@ export default function VolunteerAdminClient() {
             attended: registrations.filter((registration) => registration.status === "ATTENDED").length,
         };
     }, [events]);
+    const isUploadedCover = form.coverImageUrl.startsWith("data:image/");
 
     const createEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -133,6 +136,36 @@ export default function VolunteerAdminClient() {
             location: place.address,
             mapUrl: `https://www.google.com/maps/search/?api=1&query=${query}${placeParam}`,
         }));
+    };
+
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingCover(true);
+        try {
+            const compressedFile = await imageCompression(file, {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1200,
+                useWebWorker: true,
+                fileType: "image/jpeg",
+            });
+
+            const reader = new FileReader();
+            reader.readAsDataURL(compressedFile);
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = () => reject(new Error("讀取圖片失敗"));
+            });
+
+            setForm((prev) => ({ ...prev, coverImageUrl: dataUrl }));
+        } catch (error) {
+            console.error(error);
+            alert("封面圖上傳失敗，請換一張圖片再試一次。");
+        } finally {
+            setUploadingCover(false);
+            e.target.value = "";
+        }
     };
 
     const updateRegistration = async (registrationId: string, status: RegistrationStatus) => {
@@ -202,12 +235,45 @@ export default function VolunteerAdminClient() {
                             placeholder="活動網址代號，例如 2026-1-31-diy"
                             className="w-full glass-input rounded-xl px-4 py-3"
                         />
-                        <input
-                            value={form.coverImageUrl}
-                            onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
-                            placeholder="封面圖網址，可留空"
-                            className="w-full glass-input rounded-xl px-4 py-3"
-                        />
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm text-slate-300">活動封面圖</span>
+                                {form.coverImageUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm((prev) => ({ ...prev, coverImageUrl: "" }))}
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        移除
+                                    </button>
+                                )}
+                            </div>
+                            {form.coverImageUrl && (
+                                <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={form.coverImageUrl} alt="活動封面預覽" className="h-40 w-full object-cover" />
+                                </div>
+                            )}
+                            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">
+                                {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+                                {uploadingCover ? "圖片處理中..." : "上傳封面圖"}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleCoverUpload}
+                                    disabled={uploadingCover}
+                                    className="hidden"
+                                />
+                            </label>
+                            <input
+                                value={isUploadedCover ? "" : form.coverImageUrl}
+                                onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
+                                placeholder={isUploadedCover ? "已使用上傳圖片" : "或貼上封面圖網址，可留空"}
+                                disabled={isUploadedCover}
+                                className="w-full glass-input rounded-xl px-4 py-3"
+                            />
+                        </div>
                         <textarea
                             value={form.description}
                             onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
