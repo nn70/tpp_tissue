@@ -38,8 +38,8 @@ export default function Navigation() {
                                 className={`${baseLinkClass} ${isDashboard ? activeLinkClass : inactiveLinkClass}`}
                             >
                                 <Map className="w-4 h-4" />
-                                <span className="hidden sm:inline">物資發放紀錄</span>
-                                <span className="sm:hidden">發放紀錄</span>
+                                <span className="hidden sm:inline">(測)物資發放紀錄</span>
+                                <span className="sm:hidden">(測)發放紀錄</span>
                             </Link>
                         )}
 

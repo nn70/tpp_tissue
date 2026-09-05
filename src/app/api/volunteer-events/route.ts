@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { canManageContent } from "@/lib/permissions";
 import { getRewardProgress } from "@/lib/volunteerRewards";
 import { normalizeVolunteerEventCategory } from "@/lib/volunteerEventCategories";
+import { parseTaipeiDateTimeInput } from "@/lib/taipeiTime";
 
 type EventRegistrationForList = {
     id: string;
@@ -130,9 +131,9 @@ export async function POST(request: Request) {
                 location: location?.trim() || null,
                 mapUrl: mapUrl?.trim() || null,
                 coverImageUrl: coverImageUrl?.trim() || null,
-                startsAt: new Date(startsAt),
-                endsAt: endsAt ? new Date(endsAt) : null,
-                registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+                startsAt: parseTaipeiDateTimeInput(startsAt),
+                endsAt: endsAt ? parseTaipeiDateTimeInput(endsAt) : null,
+                registrationDeadline: registrationDeadline ? parseTaipeiDateTimeInput(registrationDeadline) : null,
                 capacity: capacity ? Number(capacity) : null,
                 isActive: isActive ?? true,
             } as unknown as Parameters<typeof prisma.volunteerEvent.create>[0]["data"],

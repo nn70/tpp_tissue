@@ -9,7 +9,7 @@ const features = [
     { icon: ClipboardList, title: "活動建立與編輯", description: "管理員與小編可建立、編輯活動；管理員可刪除活動，並查看完整參與者資料。" },
     { icon: QrCode, title: "QR Code 現場報到", description: "每個活動都有專屬報到 QR Code，志工現場輸入報名電話，驗證成功才列入出席次數。" },
     { icon: MapPinned, title: "物資發放紀錄", description: "管理員與小編可在地圖上記錄發放地點、對象、物資品項與後續聯絡提醒，一般志工不會看到。" },
-    { icon: CalendarClock, title: "Google Calendar 提醒", description: "報名成功可加入 Google Calendar，活動預設提前 1 小時提醒；物資紀錄也可建立兩週後追蹤提醒。" },
+    { icon: CalendarClock, title: "Google Calendar 新增活動", description: "報名成功可開啟 Google Calendar 新增活動頁，由志工自行確認與儲存，不需要授權網站管理行事曆。" },
     { icon: Award, title: "志工里程碑", description: "完成現場報到後累積出席次數，網站會顯示不同階段的志工參與紀錄與感謝項目。" },
 ];
 

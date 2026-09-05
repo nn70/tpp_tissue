@@ -15,9 +15,27 @@ export async function GET() {
 
     try {
         const users = await prisma.user.findMany({
-            orderBy: { id: "asc" }
+            orderBy: { id: "asc" },
+            include: {
+                volunteerRegistrations: {
+                    orderBy: { updatedAt: "desc" },
+                    take: 1,
+                },
+            },
         });
-        return NextResponse.json(users);
+
+        return NextResponse.json(users.map((user) => {
+            const fallbackProfile = user.volunteerRegistrations[0] ?? null;
+
+            return {
+                id: user.id,
+                name: user.name || fallbackProfile?.name || null,
+                email: user.email,
+                image: user.image,
+                phone: user.phone || fallbackProfile?.phone || null,
+                role: user.role,
+            };
+        }));
     } catch (error) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

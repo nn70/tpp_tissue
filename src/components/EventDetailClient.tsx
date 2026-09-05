@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, User, UserCheck } from "lucide-react";
 import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
 import { getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
+import { taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -59,6 +60,7 @@ function getEventStatus(event: EventDetail) {
 
 function formatDateTime(value: string) {
     return new Intl.DateTimeFormat("zh-TW", {
+        ...taipeiDateTimeFormatOptions,
         year: "numeric",
         month: "long",
         day: "numeric",

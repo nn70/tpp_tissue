@@ -7,6 +7,7 @@ import imageCompression from "browser-image-compression";
 import { CalendarPlus, CheckCircle2, Clock, Copy, Edit3, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Save, Trash2, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 import { VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
+import { formatTaipeiDateTimeInputValue, taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -293,10 +294,7 @@ export default function VolunteerAdminClient() {
     };
 
     const toDateTimeInputValue = (value: string | null) => {
-        if (!value) return "";
-        const date = new Date(value);
-        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        return localDate.toISOString().slice(0, 16);
+        return formatTaipeiDateTimeInputValue(value);
     };
 
     const startEditingEvent = (event: AdminEvent) => {
@@ -377,6 +375,7 @@ export default function VolunteerAdminClient() {
 
     const formatDateTime = (value: string) => {
         return new Intl.DateTimeFormat("zh-TW", {
+            ...taipeiDateTimeFormatOptions,
             year: "numeric",
             month: "2-digit",
             day: "2-digit",

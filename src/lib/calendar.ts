@@ -28,36 +28,8 @@ export function buildGoogleCalendarUrl(event: CalendarEvent) {
 }
 
 export async function askToAddGoogleCalendar(event: CalendarEvent) {
-    const shouldOpen = window.confirm("報名成功！要加入 Google Calendar 嗎？");
+    const shouldOpen = window.confirm("報名成功！要開啟 Google Calendar 新增活動頁嗎？");
     if (shouldOpen) {
-        const calendarWindow = window.open("about:blank", "_blank");
-        try {
-            const res = await fetch("/api/calendar/volunteer-events", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ eventId: event.id }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.htmlLink) {
-                    if (calendarWindow) {
-                        calendarWindow.location.href = data.htmlLink;
-                    } else {
-                        window.open(data.htmlLink, "_blank", "noopener,noreferrer");
-                    }
-                }
-                return;
-            }
-        } catch (error) {
-            console.error("Error creating Google Calendar event:", error);
-        }
-
-        const fallbackUrl = buildGoogleCalendarUrl(event);
-        if (calendarWindow) {
-            calendarWindow.location.href = fallbackUrl;
-        } else {
-            window.open(fallbackUrl, "_blank", "noopener,noreferrer");
-        }
+        window.open(buildGoogleCalendarUrl(event), "_blank", "noopener,noreferrer");
     }
 }

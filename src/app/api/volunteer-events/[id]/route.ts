@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canManageContent, isAdmin } from "@/lib/permissions";
 import { normalizeVolunteerEventCategory } from "@/lib/volunteerEventCategories";
+import { parseTaipeiDateTimeInput } from "@/lib/taipeiTime";
 
 type RouteParams = {
     params: Promise<{
@@ -46,9 +47,9 @@ export async function PUT(request: Request, props: RouteParams) {
                 location: location?.trim() || null,
                 mapUrl: mapUrl?.trim() || null,
                 coverImageUrl: coverImageUrl?.trim() || null,
-                startsAt: new Date(startsAt),
-                endsAt: endsAt ? new Date(endsAt) : null,
-                registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+                startsAt: parseTaipeiDateTimeInput(startsAt),
+                endsAt: endsAt ? parseTaipeiDateTimeInput(endsAt) : null,
+                registrationDeadline: registrationDeadline ? parseTaipeiDateTimeInput(registrationDeadline) : null,
                 capacity: capacity ? Number(capacity) : null,
                 isActive: isActive ?? true,
             } as unknown as Parameters<typeof prisma.volunteerEvent.update>[0]["data"],

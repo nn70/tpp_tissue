@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, LogIn, Phone, QrCode, XCircle } from "lucide-react";
+import { taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
 type CheckInEvent = {
     id: string;
@@ -22,6 +23,7 @@ type CheckInState = "idle" | "checking" | "success" | "error";
 
 function formatDateTime(value: string) {
     return new Intl.DateTimeFormat("zh-TW", {
+        ...taipeiDateTimeFormatOptions,
         year: "numeric",
         month: "long",
         day: "numeric",

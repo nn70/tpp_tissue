@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, Save, User, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
 import { getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
+import { taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
 
 type RegistrationStatus = "REGISTERED" | "WAITLISTED" | "ATTENDED" | "CANCELLED";
 
@@ -15,6 +16,7 @@ type VolunteerEvent = {
     category: string | null;
     description: string | null;
     location: string | null;
+    mapUrl: string | null;
     coverImageUrl: string | null;
     startsAt: string;
     endsAt: string | null;
@@ -194,6 +196,7 @@ export default function VolunteerForumClient() {
 
     const formatDateTime = (value: string) => {
         return new Intl.DateTimeFormat("zh-TW", {
+            ...taipeiDateTimeFormatOptions,
             month: "2-digit",
             day: "2-digit",
             hour: "2-digit",
@@ -204,16 +207,13 @@ export default function VolunteerForumClient() {
     return (
         <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto space-y-6 pb-10">
-                <section className="grid lg:grid-cols-[1.5fr_1fr] gap-4">
+                <section>
                     <div className="glass-panel rounded-2xl p-6">
                         <div className="flex items-center gap-3 text-slate-300 mb-4">
                             <Users className="w-5 h-5 text-[#61C5C7]" />
                             <span className="text-sm">志工活動報名</span>
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
-                        <p className="text-slate-400 leading-7">
-                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30、50 次時會解鎖志工服務里程碑。
-                        </p>
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
                                 <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
@@ -226,31 +226,6 @@ export default function VolunteerForumClient() {
                                 </span>
                             </div>
                         )}
-                    </div>
-
-                    <div className="glass-panel rounded-2xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Gift className="w-5 h-5 text-[#F4F7F7]" />
-                            <h2 className="font-bold">我的服務里程碑</h2>
-                        </div>
-                        <div className="text-4xl font-black text-white">{rewardProgress?.attendedCount ?? 0}</div>
-                        <p className="text-sm text-slate-400 mt-1">已確認出席活動次數</p>
-                        <div className="mt-5 rounded-xl bg-black/20 border border-white/10 p-4">
-                            {rewardProgress?.next ? (
-                                <>
-                                    <div className="font-semibold text-slate-200">下一個里程碑：{rewardProgress.next.title}</div>
-                                    <div className="text-sm text-slate-400 mt-1">再參加 {rewardProgress.remainingToNext} 次可解鎖</div>
-                                </>
-                            ) : (
-                                <div className="font-semibold text-[#D9FFFF]">已達成所有里程碑</div>
-                            )}
-                        </div>
-                        <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-[#D9FFFF] hover:text-white">
-                            查看完整里程碑說明
-                        </Link>
-                        <p className="mt-3 text-xs leading-5 text-slate-500">
-                            里程碑僅作為志工服務紀錄、感謝與活動安排參考；所有內容皆須符合選罷法，不得作為投票或助選行為之對價。
-                        </p>
                     </div>
                 </section>
 
@@ -322,6 +297,8 @@ export default function VolunteerForumClient() {
                             const isRegistered = status === "REGISTERED" || status === "ATTENDED" || isWaitlisted;
                             const isFull = event.capacity !== null && event.registrationCount >= event.capacity;
                             const coverImageUrl = getVolunteerEventCoverImage(event);
+                            const mapQuery = event.location || event.mapUrl;
+                            const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
 
                             return (
                                 <article key={event.id} className="glass-panel rounded-2xl p-5 space-y-4">
@@ -359,6 +336,18 @@ export default function VolunteerForumClient() {
                                     </div>
 
                                     {event.description && <p className="text-sm text-slate-300 leading-6">{event.description}</p>}
+
+                                    {mapEmbedUrl && (
+                                        <div className="overflow-hidden rounded-xl border border-[#61C5C7]/20 bg-white/70">
+                                            <iframe
+                                                title={`${event.title} 地圖`}
+                                                src={mapEmbedUrl}
+                                                className="h-48 w-full border-0"
+                                                loading="lazy"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                            />
+                                        </div>
+                                    )}
 
                                     <div className="text-sm text-slate-400">
                                         已報名 {event.registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
@@ -442,6 +431,34 @@ export default function VolunteerForumClient() {
                         })}
                     </section>
                 )}
+
+                <section className="glass-panel rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Gift className="w-5 h-5 text-[#F4F7F7]" />
+                        <h2 className="font-bold">我的服務里程碑</h2>
+                    </div>
+                    <div className="text-4xl font-black text-white">{rewardProgress?.attendedCount ?? 0}</div>
+                    <p className="text-sm text-slate-400 mt-1">已確認出席活動次數</p>
+                    <div className="mt-5 rounded-xl bg-black/20 border border-white/10 p-4">
+                        {rewardProgress?.next ? (
+                            <>
+                                <div className="font-semibold text-slate-200">下一個里程碑：{rewardProgress.next.title}</div>
+                                <div className="text-sm text-slate-400 mt-1">再參加 {rewardProgress.remainingToNext} 次可解鎖</div>
+                            </>
+                        ) : (
+                            <div className="font-semibold text-[#D9FFFF]">已達成所有里程碑</div>
+                        )}
+                    </div>
+                    <p className="mt-4 text-sm leading-6 text-slate-400">
+                        每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30、50 次時會解鎖志工服務里程碑。
+                    </p>
+                    <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-[#D9FFFF] hover:text-white">
+                        查看完整里程碑說明
+                    </Link>
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                        里程碑僅作為志工服務紀錄、感謝與活動安排參考；所有內容皆須符合選罷法，不得作為投票或助選行為之對價。
+                    </p>
+                </section>
             </div>
         </main>
     );

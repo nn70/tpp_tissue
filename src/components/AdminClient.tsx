@@ -10,6 +10,7 @@ interface AppUser {
     name: string | null;
     email: string | null;
     image: string | null;
+    phone: string | null;
     role: "USER" | "EDITOR" | "ADMIN";
 }
 
@@ -121,6 +122,7 @@ export default function AdminClient() {
                             <thead>
                                 <tr className="bg-white/5 border-b border-white/10">
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300">使用者</th>
+                                    <th className="px-6 py-4 text-sm font-medium text-slate-300">聯絡電話</th>
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300">目前的權限</th>
                                     <th className="px-6 py-4 text-sm font-medium text-slate-300 text-right">操作設定</th>
                                     {isSuperUser && <th className="px-6 py-4 text-sm font-medium text-slate-300 text-right">刪除</th>}
@@ -129,14 +131,14 @@ export default function AdminClient() {
                             <tbody className="divide-y divide-white/5">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={isSuperUser ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
+                                        <td colSpan={isSuperUser ? 5 : 4} className="px-6 py-12 text-center text-slate-400">
                                             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
                                             載入中...
                                         </td>
                                     </tr>
                                 ) : users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={isSuperUser ? 4 : 3} className="px-6 py-12 text-center text-slate-400">
+                                        <td colSpan={isSuperUser ? 5 : 4} className="px-6 py-12 text-center text-slate-400">
                                             尚未有使用者註冊
                                         </td>
                                     </tr>
@@ -153,10 +155,13 @@ export default function AdminClient() {
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <div className="font-medium text-slate-200">{user.name || '未知使用者'}</div>
+                                                        <div className="font-medium text-slate-200">{user.name || '尚未填寫姓名'}</div>
                                                         <div className="text-sm text-slate-400">{user.email}</div>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-slate-200">{user.phone || '尚未填寫電話'}</div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'ADMIN' ? 'bg-amber-500/20 text-[#F4F7F7] border-amber-500/30' :
