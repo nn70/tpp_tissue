@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession } from "next-auth"
+import type { DefaultSession } from "next-auth"
 
 declare module "next-auth" {
     /**
@@ -8,6 +8,7 @@ declare module "next-auth" {
         user: {
             /** The user's id. */
             id: string
+            role: string
         } & DefaultSession["user"]
     }
 }
