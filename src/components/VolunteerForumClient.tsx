@@ -124,7 +124,7 @@ export default function VolunteerForumClient() {
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
                         <p className="text-slate-400 leading-7">
-                            每次活動由後台確認出席後才會累計次數；達到 5、10、20、50 次時會解鎖不同獎勵。
+                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30 次時會解鎖不同獎勵。
                         </p>
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
@@ -157,6 +157,9 @@ export default function VolunteerForumClient() {
                                 <div className="font-semibold text-amber-200">已達成所有獎勵門檻</div>
                             )}
                         </div>
+                        <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-amber-200 hover:text-amber-100">
+                            查看完整獎勵說明
+                        </Link>
                     </div>
                 </section>
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, Map, Users, Shield, LogOut } from "lucide-react";
+import { Award, CalendarCheck, Map, Users, Shield, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Navigation() {
@@ -10,6 +10,7 @@ export default function Navigation() {
     const { data: session } = useSession();
     const isDashboard = pathname === "/dashboard" || pathname === "/";
     const isForum = pathname === "/forum";
+    const isRewards = pathname === "/volunteer-rewards";
     const isAdmin = pathname === "/admin";
     const isVolunteerAdmin = pathname === "/volunteer-admin";
     const canManageContent = session?.user?.role === "ADMIN" || session?.user?.role === "EDITOR";
@@ -52,6 +53,19 @@ export default function Navigation() {
                             <Users className="w-4 h-4" />
                             <span className="hidden sm:inline">志工報名系統(可追蹤)</span>
                             <span className="sm:hidden">報名系統</span>
+                        </Link>
+
+                        <Link
+                            href="/volunteer-rewards"
+                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
+                                ${isRewards
+                                    ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/50 shadow-lg shadow-amber-500/10'
+                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                }`}
+                        >
+                            <Award className="w-4 h-4" />
+                            <span className="hidden sm:inline">志工獎勵</span>
+                            <span className="sm:hidden">獎勵</span>
                         </Link>
 
                         {canManageContent && (
