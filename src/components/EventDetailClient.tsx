@@ -357,7 +357,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                                     required
                                 />
                                 <p className="mt-2 text-xs leading-5 text-slate-400">
-                                    第一次報名會保存姓名與電話，之後報名會自動帶出；現場 QR 報到時需輸入相同電話。
+                                    第一次報名會保存姓名與電話，之後報名會自動帶出；現場 QR 報到時需輸入電話末三碼。
                                 </p>
                             </div>
                             <textarea

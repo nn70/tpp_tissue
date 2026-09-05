@@ -36,7 +36,7 @@ function formatDateTime(value: string) {
 export default function EventCheckInClient({ event, token, isLoggedIn }: Props) {
     const [state, setState] = useState<CheckInState>("idle");
     const [phone, setPhone] = useState("");
-    const [message, setMessage] = useState(isLoggedIn ? "請輸入報名時留下的電話號碼完成報到。" : "請先登入 Google 帳號完成報到。");
+    const [message, setMessage] = useState(isLoggedIn ? "請輸入報名電話末三碼完成報到。" : "請先登入 Google 帳號完成報到。");
     const callbackUrl = useMemo(() => {
         const path = `/events/${event.slug || event.id}/check-in?token=${encodeURIComponent(token)}`;
         return `/login?callbackUrl=${encodeURIComponent(path)}`;
@@ -108,18 +108,21 @@ export default function EventCheckInClient({ event, token, isLoggedIn }: Props) 
                             <div>
                                 <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
                                     <Phone className="h-4 w-4 text-[#61C5C7]" />
-                                    報名時登記的電話
+                                    報名電話末三碼
                                 </label>
                                 <input
                                     type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]{3}"
+                                    maxLength={3}
                                     value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="請輸入報名時留下的電話"
+                                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                                    placeholder="例如 494"
                                     required
                                     className="w-full glass-input rounded-xl px-4 py-3"
                                 />
                                 <p className="mt-2 text-xs leading-5 text-slate-400">
-                                    電話需與報名時登記的號碼一致，系統才會完成報到。
+                                    末三碼需與報名時登記的電話一致，系統才會完成報到。
                                 </p>
                             </div>
                             <button

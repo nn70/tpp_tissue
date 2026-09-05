@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isValidPhone, normalizePhone } from "@/lib/phone";
+import { normalizePhone } from "@/lib/phone";
 
 type RouteParams = {
     params: Promise<{
         id: string;
     }>;
 };
+
+function getPhoneLastThree(value: string) {
+    return normalizePhone(value).replace(/\D/g, "").slice(-3);
+}
 
 export async function POST(request: Request, props: RouteParams) {
     const session = await getServerSession(authOptions);
@@ -21,10 +25,10 @@ export async function POST(request: Request, props: RouteParams) {
         const { id } = await props.params;
         const body = await request.json().catch(() => ({}));
         const token = typeof body.token === "string" ? body.token : "";
-        const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+        const phoneLastThree = typeof body.phone === "string" ? body.phone.replace(/\D/g, "").slice(-3) : "";
 
-        if (!phone || !isValidPhone(phone)) {
-            return NextResponse.json({ error: "請輸入有效的電話號碼。" }, { status: 400 });
+        if (phoneLastThree.length !== 3) {
+            return NextResponse.json({ error: "請輸入報名電話的末三碼。" }, { status: 400 });
         }
 
         const event = await prisma.volunteerEvent.findFirst({
@@ -74,8 +78,8 @@ export async function POST(request: Request, props: RouteParams) {
             return NextResponse.json({ error: "這筆報名資料沒有電話號碼，請找現場工作人員協助。" }, { status: 400 });
         }
 
-        if (normalizePhone(existingRegistration.phone) !== normalizePhone(phone)) {
-            return NextResponse.json({ error: "電話號碼與報名時登記的不一致，報到失敗。" }, { status: 400 });
+        if (getPhoneLastThree(existingRegistration.phone) !== phoneLastThree) {
+            return NextResponse.json({ error: "末三碼與報名時登記的電話不一致，報到失敗。" }, { status: 400 });
         }
 
         const registration = await prisma.volunteerRegistration.update({
