@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { AlertTriangle, Award, BookOpenCheck, CheckCircle2, ClipboardCheck, Medal, Users } from "lucide-react";
+import { AlertTriangle, Award, Camera, CheckCircle2, ClipboardCheck, Gift, Medal, Shirt } from "lucide-react";
 import { rewardMilestones } from "@/lib/volunteerRewards";
 
-const rewardIcons = [Medal, ClipboardCheck, BookOpenCheck, Users];
+const rewardIcons = [Gift, ClipboardCheck, Shirt, Camera, Medal];
 
 export default function VolunteerRewardsPage() {
     return (
@@ -17,7 +17,7 @@ export default function VolunteerRewardsPage() {
                             </div>
                             <h1 className="text-3xl font-black text-white sm:text-4xl">每一次到場，都會累積成你的志工里程碑</h1>
                             <p className="mt-4 leading-7 text-slate-300">
-                                志工參加活動後，需完成現場 QR Code 報到，才會列入出席次數。里程碑僅作為服務參與紀錄、感謝與培訓通知，不提供現金、商品、折價、抽獎或其他具財產價值之利益。
+                                志工參加活動後，需完成現場 QR Code 報到，才會列入出席次數。里程碑僅作為服務參與紀錄、感謝與主辦方安排參考，所有內容皆須符合中華民國選罷法及主辦方合規審查。
                             </p>
                         </div>
                         <Link
@@ -68,7 +68,7 @@ export default function VolunteerRewardsPage() {
                         <div>
                             <h2 className="font-bold text-white">選罷法合規聲明</h2>
                             <p className="mt-2 leading-7 text-slate-300">
-                                本頁所列內容僅為志工服務紀錄、感謝與內部培訓安排，不具財產價值，不得兌換現金、商品、折價、抽獎資格或其他經濟利益，也不得轉讓。任何里程碑或感謝安排，均不得作為投票、不投票、支持或不支持特定候選人、政黨、罷免案、連署、助選行為之對價、條件、承諾或暗示。主辦方得基於法規、選務期間、活動執行狀況或合規風險，隨時調整、暫停或取消相關內容；實際內容以主辦方最新公告及法律專業審查意見為準。
+                                本頁所列里程碑為志工服務參與紀錄、感謝及活動安排參考，並非保證給付、抽獎、兌換承諾或可請求之權利；不得兌換現金、折價、報酬或其他經濟利益，也不得轉讓。任何小物、商品、感謝狀或合照安排，均不得作為投票、不投票、支持或不支持特定候選人、政黨、罷免案、連署或助選行為之對價、條件、承諾、誘因或暗示。主辦方得基於中華民國選罷法、選務期間規範、活動執行狀況、名額、行程或合規風險，隨時調整、替換、暫停或取消相關內容；實際內容以主辦方最新公告及法律專業審查意見為準。
                             </p>
                         </div>
                     </div>

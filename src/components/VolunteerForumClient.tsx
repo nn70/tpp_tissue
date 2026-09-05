@@ -141,7 +141,7 @@ export default function VolunteerForumClient() {
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
                         <p className="text-slate-400 leading-7">
-                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30 次時會解鎖志工服務里程碑。
+                            每次活動完成現場 QR Code 報到後才會累計次數；達到 3、10、20、30、50 次時會解鎖志工服務里程碑。
                         </p>
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
@@ -178,7 +178,7 @@ export default function VolunteerForumClient() {
                             查看完整里程碑說明
                         </Link>
                         <p className="mt-3 text-xs leading-5 text-slate-500">
-                            里程碑僅作為志工服務紀錄、感謝與培訓通知，不提供具財產價值之利益，且不得作為投票或助選行為之對價。
+                            里程碑僅作為志工服務紀錄、感謝與活動安排參考；所有內容皆須符合選罷法，不得作為投票或助選行為之對價。
                         </p>
                     </div>
                 </section>
