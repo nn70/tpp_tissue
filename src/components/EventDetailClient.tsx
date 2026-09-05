@@ -94,7 +94,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
     };
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100 pt-16">
+        <main className="min-h-screen tpp-page pt-16">
             <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
                 <Link href="/forum" className="inline-flex text-sm text-slate-300 hover:text-white mb-5">
                     ← 返回活動列表
@@ -119,7 +119,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                     <div className="mt-6 grid sm:grid-cols-2 gap-4">
                         <div className="rounded-xl bg-black/20 border border-white/10 p-4">
                             <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                                <CalendarDays className="w-4 h-4 text-blue-300" />
+                                <CalendarDays className="w-4 h-4 text-[#61C5C7]" />
                                 日期時間
                             </div>
                             <div className="font-semibold">{formatDateTime(event.startsAt)}</div>
@@ -128,7 +128,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
 
                         <div className="rounded-xl bg-black/20 border border-white/10 p-4">
                             <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                                <MapPin className="w-4 h-4 text-emerald-300" />
+                                <MapPin className="w-4 h-4 text-[#61C5C7]" />
                                 活動地點
                             </div>
                             <div className="font-semibold">{event.location || "線上活動"}</div>
@@ -152,7 +152,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                     )}
 
                     <div className="mt-5 flex flex-wrap gap-3">
-                        <a href={buildGoogleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold transition">
+                        <a href={buildGoogleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl tpp-primary-button px-4 py-2 text-sm font-semibold transition">
                             <ExternalLink className="w-4 h-4" />
                             加入 Google 行事曆
                         </a>
@@ -169,12 +169,12 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                 <section className="mt-6 glass-panel rounded-2xl p-6 sm:p-8">
                     <h2 className="text-2xl font-bold mb-4">立即報名</h2>
 
-                    {message && <div className="mb-4 rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-blue-200">{message}</div>}
+                    {message && <div className="mb-4 rounded-xl border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-4 py-3 text-[#D9FFFF]">{message}</div>}
 
                     {!isLoggedIn ? (
                         <div className="rounded-xl bg-black/20 border border-white/10 p-5">
                             <div className="font-semibold text-white">請先登入 Google 帳號再報名。</div>
-                            <Link href="/login" className="mt-4 inline-flex rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-3 text-sm font-semibold transition">
+                            <Link href="/login" className="mt-4 inline-flex rounded-xl tpp-primary-button px-5 py-3 text-sm font-semibold transition">
                                 前往登入
                             </Link>
                         </div>
@@ -188,18 +188,18 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                         </div>
                     ) : registration?.status === "ATTENDED" ? (
                         <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/20 p-5">
-                            <div className="flex items-center gap-2 font-semibold text-emerald-100">
+                            <div className="flex items-center gap-2 font-semibold text-[#D9FFFF]">
                                 <CheckCircle2 className="w-5 h-5" />
                                 已確認出席
                             </div>
                         </div>
                     ) : isRegistered ? (
                         <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/20 p-5">
-                            <div className="flex items-center gap-2 font-semibold text-emerald-100">
+                            <div className="flex items-center gap-2 font-semibold text-[#D9FFFF]">
                                 <CheckCircle2 className="w-5 h-5" />
                                 你已完成報名
                             </div>
-                            <p className="text-sm text-emerald-100/75 mt-2">活動結束後由後台確認出席，才會累計獎勵次數。</p>
+                            <p className="text-sm text-[#D9FFFF]/75 mt-2">活動結束後由後台確認出席，才會累計獎勵次數。</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -216,7 +216,7 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                                 type="button"
                                 onClick={submitRegistration}
                                 disabled={saving}
-                                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-6 py-3 font-semibold transition"
+                                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl tpp-primary-button disabled:opacity-50 px-6 py-3 font-semibold transition"
                             >
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                                 送出報名

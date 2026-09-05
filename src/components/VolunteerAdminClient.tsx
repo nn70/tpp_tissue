@@ -250,7 +250,7 @@ export default function VolunteerAdminClient() {
     };
 
     return (
-        <main className="min-h-screen bg-[#0f1016] text-slate-100 pt-20 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto space-y-6 pb-10">
                 <section className="grid md:grid-cols-3 gap-4">
                     <div className="glass-panel rounded-2xl p-5">
@@ -270,7 +270,7 @@ export default function VolunteerAdminClient() {
                 <section className="grid lg:grid-cols-[0.95fr_1.4fr] gap-5">
                     <form onSubmit={createEvent} className="glass-panel rounded-2xl p-6 space-y-4">
                         <div className="flex items-center gap-3 mb-2">
-                            <CalendarPlus className="w-5 h-5 text-blue-300" />
+                            <CalendarPlus className="w-5 h-5 text-[#61C5C7]" />
                             <h1 className="text-xl font-bold">建立志工活動</h1>
                         </div>
                         <input
@@ -342,9 +342,9 @@ export default function VolunteerAdminClient() {
                                         setForm((prev) => ({ ...prev, location: "", mapUrl: "" }));
                                     }
                                 }}
-                                className="h-4 w-4 accent-blue-500"
+                                className="h-4 w-4 accent-[#61C5C7]"
                             />
-                            <Monitor className="h-4 w-4 text-blue-300" />
+                            <Monitor className="h-4 w-4 text-[#61C5C7]" />
                             線上活動
                         </label>
                         {!isOnlineEvent && (
@@ -409,7 +409,7 @@ export default function VolunteerAdminClient() {
                         </label>
                         <button
                             disabled={saving}
-                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-4 py-3 font-semibold transition"
+                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button disabled:opacity-60 px-4 py-3 font-semibold transition"
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarPlus className="w-4 h-4" />}
                             建立活動
@@ -419,7 +419,7 @@ export default function VolunteerAdminClient() {
                     <section className="glass-panel rounded-2xl p-6">
                         <div className="flex items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-3">
-                                <Users className="w-5 h-5 text-emerald-300" />
+                                <Users className="w-5 h-5 text-[#61C5C7]" />
                                 <h2 className="text-xl font-bold">活動報名管理</h2>
                             </div>
                             <button onClick={fetchAdminData} className="p-2 rounded-lg hover:bg-white/10 transition" title="重新整理">
@@ -478,8 +478,8 @@ export default function VolunteerAdminClient() {
                                                     </div>
                                                     <div className="min-w-0 space-y-3">
                                                         <div>
-                                                            <div className="font-semibold text-emerald-100">現場報到 QR Code</div>
-                                                            <p className="mt-1 text-sm text-emerald-100/75">志工掃描後登入 Google，就會自動登記為已出席。</p>
+                                                            <div className="font-semibold text-[#D9FFFF]">現場報到 QR Code</div>
+                                                            <p className="mt-1 text-sm text-[#D9FFFF]/75">志工掃描後登入 Google，就會自動登記為已出席。</p>
                                                         </div>
                                                         <div className="break-all rounded-lg bg-black/20 px-3 py-2 text-xs text-slate-300">
                                                             {buildCheckInUrl(event)}
@@ -507,7 +507,7 @@ export default function VolunteerAdminClient() {
                                                             <div className="font-medium text-slate-200">{registration.user.name || "未命名志工"}</div>
                                                             <div className="text-xs text-slate-400">{registration.user.email}</div>
                                                             {registration.note && <div className="text-xs text-slate-300 mt-1">備註：{registration.note}</div>}
-                                                            {registration.checkedInAt && <div className="text-xs text-emerald-300 mt-1">報到：{formatDateTime(registration.checkedInAt)}</div>}
+                                                            {registration.checkedInAt && <div className="text-xs text-[#61C5C7] mt-1">報到：{formatDateTime(registration.checkedInAt)}</div>}
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <select
@@ -535,7 +535,7 @@ export default function VolunteerAdminClient() {
 
                 <section className="glass-panel rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-4">
-                        <Gift className="w-5 h-5 text-amber-300" />
+                        <Gift className="w-5 h-5 text-[#F4F7F7]" />
                         <h2 className="text-xl font-bold">志工獎勵統計</h2>
                     </div>
                     <div className="overflow-x-auto">
@@ -561,7 +561,7 @@ export default function VolunteerAdminClient() {
                                         </td>
                                         <td className="py-4 pl-4 text-sm text-slate-300">
                                             {volunteer.next ? `再 ${volunteer.remainingToNext} 次：${volunteer.next.title}` : (
-                                                <span className="inline-flex items-center gap-1 text-emerald-300">
+                                                <span className="inline-flex items-center gap-1 text-[#61C5C7]">
                                                     <CheckCircle2 className="w-4 h-4" />
                                                     全部達成
                                                 </span>

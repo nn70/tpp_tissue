@@ -114,12 +114,12 @@ export default function VolunteerForumClient() {
     };
 
     return (
-        <main className="min-h-screen bg-[#0f1016] text-slate-100 pt-20 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto space-y-6 pb-10">
                 <section className="grid lg:grid-cols-[1.5fr_1fr] gap-4">
                     <div className="glass-panel rounded-2xl p-6">
                         <div className="flex items-center gap-3 text-slate-300 mb-4">
-                            <Users className="w-5 h-5 text-blue-300" />
+                            <Users className="w-5 h-5 text-[#61C5C7]" />
                             <span className="text-sm">志工活動報名</span>
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-3">登入 Google 帳號後即可報名活動</h1>
@@ -129,11 +129,11 @@ export default function VolunteerForumClient() {
                         {nextEvent && (
                             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
                                 <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-                                    <CalendarDays className="w-4 h-4 text-blue-300" />
+                                    <CalendarDays className="w-4 h-4 text-[#61C5C7]" />
                                     下一場：{formatDateTime(nextEvent.startsAt)}
                                 </span>
                                 <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-                                    <MapPin className="w-4 h-4 text-emerald-300" />
+                                    <MapPin className="w-4 h-4 text-[#61C5C7]" />
                                     {nextEvent.location || "線上活動"}
                                 </span>
                             </div>
@@ -142,7 +142,7 @@ export default function VolunteerForumClient() {
 
                     <div className="glass-panel rounded-2xl p-6">
                         <div className="flex items-center gap-3 mb-4">
-                            <Gift className="w-5 h-5 text-amber-300" />
+                            <Gift className="w-5 h-5 text-[#F4F7F7]" />
                             <h2 className="font-bold">我的獎勵進度</h2>
                         </div>
                         <div className="text-4xl font-black text-white">{rewardProgress?.attendedCount ?? 0}</div>
@@ -154,17 +154,17 @@ export default function VolunteerForumClient() {
                                     <div className="text-sm text-slate-400 mt-1">再參加 {rewardProgress.remainingToNext} 次可解鎖</div>
                                 </>
                             ) : (
-                                <div className="font-semibold text-amber-200">已達成所有獎勵門檻</div>
+                                <div className="font-semibold text-[#D9FFFF]">已達成所有獎勵門檻</div>
                             )}
                         </div>
-                        <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-amber-200 hover:text-amber-100">
+                        <Link href="/volunteer-rewards" className="mt-4 inline-flex text-sm font-semibold text-[#D9FFFF] hover:text-white">
                             查看完整獎勵說明
                         </Link>
                     </div>
                 </section>
 
                 {message && (
-                    <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-blue-200">
+                    <div className="rounded-xl border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-4 py-3 text-[#D9FFFF]">
                         {message}
                     </div>
                 )}
@@ -200,7 +200,7 @@ export default function VolunteerForumClient() {
                                                 </span>
                                             </div>
                                         </div>
-                                        {status === "ATTENDED" && <CheckCircle2 className="w-6 h-6 text-emerald-300 shrink-0" />}
+                                        {status === "ATTENDED" && <CheckCircle2 className="w-6 h-6 text-[#61C5C7] shrink-0" />}
                                     </div>
 
                                     {event.description && <p className="text-sm text-slate-300 leading-6">{event.description}</p>}
@@ -239,7 +239,7 @@ export default function VolunteerForumClient() {
                                                 type="button"
                                                 onClick={() => register(event)}
                                                 disabled={savingId === event.id}
-                                                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
+                                                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl tpp-primary-button disabled:opacity-50 px-4 py-3 text-sm font-semibold transition"
                                             >
                                                 {savingId === event.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                                                 我要報名

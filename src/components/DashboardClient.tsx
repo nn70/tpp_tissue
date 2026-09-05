@@ -543,13 +543,10 @@ export default function DashboardClient() {
     }, [locations, filterType, filterZone, sortBy, sortOrder]);
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-slate-900 text-slate-100 pt-16">
+        <div className="flex flex-col h-screen overflow-hidden tpp-page pt-16">
 
             {/* Main Content */}
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
-                {/* Background Blobs */}
-                <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none"></div>
-
                 {/* Sidebar List (Mobile: Bottom half, Desktop: Left panel) */}
                 <div className="flex w-full md:w-[400px] lg:w-[450px] flex-col glass-panel md:border-r border-t md:border-t-0 border-white/10 z-10 shrink-0 flex-1 md:h-full order-2 md:order-1 overflow-hidden">
                     <div className="p-4 border-b border-white/10 shrink-0 space-y-3">
@@ -557,7 +554,7 @@ export default function DashboardClient() {
                             <div className="flex flex-row space-x-2">
                                 <button
                                     onClick={() => { setIsAddingNew(true); setIsAddingBillboard(false); resetForm(); }}
-                                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95"
+                                    className="flex-1 tpp-primary-button text-white font-medium py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95"
                                 >
                                     <Plus className="w-4 h-4 shrink-0" />
                                     <span className="text-[13px] font-medium leading-tight">新增據點</span>
@@ -589,14 +586,14 @@ export default function DashboardClient() {
                                         if (sortBy === 'updated') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
                                         else { setSortBy('updated'); setSortOrder('desc'); }
                                     }}
-                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'updated' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'updated' ? 'bg-[#61C5C7]/20 text-[#D9FFFF]' : 'text-slate-400 hover:text-slate-200'}`}
                                 >最近更新 {sortBy === 'updated' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
                                 <button
                                     onClick={() => {
                                         if (sortBy === 'lastDate') setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
                                         else { setSortBy('lastDate'); setSortOrder('desc'); }
                                     }}
-                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'lastDate' ? 'bg-purple-500/30 text-purple-200' : 'text-slate-400 hover:text-slate-200'}`}
+                                    className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${sortBy === 'lastDate' ? 'bg-[#61C5C7]/20 text-[#D9FFFF]' : 'text-slate-400 hover:text-slate-200'}`}
                                 >最近發放 {sortBy === 'lastDate' && (sortOrder === 'desc' ? '↓' : '↑')}</button>
                             </div>
                             <button onClick={handleExportExcel} className="text-xs flex items-center gap-1 bg-green-600/20 text-green-400 hover:bg-green-600/40 px-2.5 py-1.5 rounded-lg transition-colors border border-green-500/30">
@@ -612,11 +609,11 @@ export default function DashboardClient() {
                             >全部</button>
                             <button
                                 onClick={() => setFilterType('SUPPLY')}
-                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'SUPPLY' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'SUPPLY' ? 'bg-[#2AA8AC] text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
                             >📦 物資站</button>
                             <button
                                 onClick={() => setFilterType('BILLBOARD')}
-                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'BILLBOARD' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                                className={`flex-1 text-xs py-1.5 rounded-lg transition-all ${filterType === 'BILLBOARD' ? 'bg-[#2AA8AC] text-white shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
                             >📍 看板</button>
                             <button
                                 onClick={() => setFilterType('PROSPECT')}
@@ -641,7 +638,7 @@ export default function DashboardClient() {
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                         {loading ? (
                             <div className="flex justify-center items-center h-40">
-                                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                                <Loader2 className="w-8 h-8 text-[#61C5C7] animate-spin" />
                             </div>
                         ) : filteredAndSortedLocations.length === 0 ? (
                             <div className="text-center text-slate-400 mt-10 p-6 glass-panel rounded-2xl">
@@ -653,17 +650,17 @@ export default function DashboardClient() {
                             filteredAndSortedLocations.map((loc) => (
                                 <div
                                     key={loc.id}
-                                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:bg-white/10 ${selectedLocId === loc.id ? 'ring-2 ring-purple-500 bg-white/10 shadow-lg shadow-purple-500/20' : ''}`}
+                                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:bg-white/10 ${selectedLocId === loc.id ? 'ring-2 ring-[#61C5C7] bg-[#61C5C7]/10 shadow-lg shadow-[#61C5C7]/20' : ''}`}
                                     onClick={() => setSelectedLocId(loc.id)}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                <h3 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-blue-200">
+                                                <h3 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-[#D9FFFF] to-white">
                                                     {(loc as any).name || loc.address}
                                                 </h3>
                                                 {(loc as any).type === 'BILLBOARD' && (
-                                                    <span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full border border-blue-500/30 shrink-0">📍 看板</span>
+                                                    <span className="bg-[#61C5C7]/16 text-[#D9FFFF] text-xs px-2 py-0.5 rounded-full border border-[#61C5C7]/30 shrink-0">📍 看板</span>
                                                 )}
                                                 {(loc as any).type === 'PROSPECT' && (
                                                     <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full border border-red-500/30 shrink-0">🎯 待開發</span>
@@ -680,7 +677,7 @@ export default function DashboardClient() {
                                             <div className="flex items-center gap-1.5 ml-2 shrink-0">
                                                 <button
                                                     onClick={(e) => openEditModal(e, loc)}
-                                                    className="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 rounded-lg transition-colors border border-blue-500/30 flex items-center"
+                                                    className="p-2 bg-[#61C5C7]/16 text-[#D9FFFF] hover:bg-[#61C5C7]/25 rounded-lg transition-colors border border-[#61C5C7]/30 flex items-center"
                                                     title="編輯"
                                                 >
                                                     <Pencil className="w-4 h-4" />
@@ -728,7 +725,7 @@ export default function DashboardClient() {
                                             <div className="bg-black/20 rounded-xl p-3 mb-3 mt-3">
                                                 <div className="flex justify-between items-center text-sm mb-2">
                                                     <span className="text-slate-400 font-medium">歷史發放明細</span>
-                                                    <span className="bg-purple-500/20 text-purple-200 text-xs px-2 py-1 rounded-full border border-purple-500/30">
+                                                    <span className="bg-[#61C5C7]/16 text-[#D9FFFF] text-xs px-2 py-1 rounded-full border border-[#61C5C7]/30">
                                                         總計 {loc.records.reduce((acc, r) => acc + r.quantity, 0)} 盒
                                                     </span>
                                                 </div>
@@ -739,7 +736,7 @@ export default function DashboardClient() {
                                                                 <Calendar className="w-3.5 h-3.5 mr-1.5 opacity-70" />
                                                                 {new Date(record.date).toLocaleDateString()}
                                                             </span>
-                                                            <span className="text-blue-300 flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
+                                                            <span className="text-[#61C5C7] flex items-center font-medium whitespace-nowrap self-end sm:self-auto">
                                                                 +{(record as any).itemType} {record.quantity} <Box className="w-3.5 h-3.5 ml-1.5 opacity-70" />
                                                                 {isAdmin && (
                                                                     <button
@@ -786,7 +783,7 @@ export default function DashboardClient() {
                                                                 <div className="flex space-x-1 items-center">
                                                                     <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="新種類" className="w-[80px] glass-input px-2 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} autoFocus />
                                                                     <div className="flex flex-col space-y-1">
-                                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-1 bg-purple-500 hover:bg-purple-400 rounded-md text-white text-[10px] font-bold transition-colors">
+                                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-2 py-1 bg-[#61C5C7] hover:bg-[#73D4D6] text-[#173246] rounded-md text-white text-[10px] font-bold transition-colors">
                                                                             儲存
                                                                         </button>
                                                                         <button type="button" onClick={(e) => { e.stopPropagation(); setIsAddingCategory(false); setNewCategoryName(""); }} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded-md text-white text-[10px] transition-colors">
@@ -805,13 +802,13 @@ export default function DashboardClient() {
                                                         <label className="text-xs text-slate-400 mb-1 block">下次聯絡日 *</label>
                                                         <input type="date" value={recordNextContactDate} onChange={e => setRecordNextContactDate(e.target.value)} required className="w-full glass-input px-3 py-2 rounded-lg text-sm" onClick={e => e.stopPropagation()} />
                                                         <label className="flex items-center space-x-2 mt-1.5 cursor-pointer select-none" onClick={e => e.stopPropagation()}>
-                                                            <input type="checkbox" checked={recordAddToCalendar} onChange={e => setRecordAddToCalendar(e.target.checked)} className="w-3.5 h-3.5 rounded accent-purple-500" />
+                                                            <input type="checkbox" checked={recordAddToCalendar} onChange={e => setRecordAddToCalendar(e.target.checked)} className="w-3.5 h-3.5 rounded accent-[#61C5C7]" />
                                                             <span className="text-xs text-slate-400">📅 建立 Google Calendar 提醒</span>
                                                         </label>
                                                     </div>
                                                     <div className="flex space-x-2">
                                                         <button type="button" onClick={(e) => { e.stopPropagation(); setAddingRecordTo(null); }} className="flex-1 py-2 rounded-lg text-slate-300 bg-white/5 hover:bg-white/10 text-sm transition-colors">取消</button>
-                                                        <button type="submit" onClick={e => e.stopPropagation()} className="flex-1 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-500 text-sm transition-colors">儲存</button>
+                                                        <button type="submit" onClick={e => e.stopPropagation()} className="flex-1 py-2 rounded-lg text-white tpp-primary-button text-sm transition-colors">儲存</button>
                                                     </div>
                                                 </form>
                                             ) : (
@@ -852,7 +849,7 @@ export default function DashboardClient() {
                     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                         <div className="glass-panel w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-fade-in-up">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold flex items-center"><MapPin className="mr-2 text-purple-400" /> 新增地點與紀錄</h2>
+                                <h2 className="text-2xl font-bold flex items-center"><MapPin className="mr-2 text-[#61C5C7]" /> 新增地點與紀錄</h2>
                                 <button onClick={() => setIsAddingNew(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">✕</button>
                             </div>
 
@@ -923,7 +920,7 @@ export default function DashboardClient() {
                                                 ) : (
                                                     <div className="flex space-x-2">
                                                         <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="輸入新物資名稱" className="flex-1 glass-input px-4 py-3 rounded-xl" autoFocus />
-                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-4 bg-purple-500 hover:bg-purple-400 rounded-xl text-white font-bold transition-colors">
+                                                        <button type="button" onClick={handleAddCategory} disabled={isSavingCategory} className="px-4 bg-[#61C5C7] hover:bg-[#73D4D6] text-[#173246] rounded-xl text-white font-bold transition-colors">
                                                             儲存
                                                         </button>
                                                         <button type="button" onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }} className="px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white transition-colors">
@@ -945,7 +942,7 @@ export default function DashboardClient() {
                                             <label className="text-sm font-medium text-slate-300 mb-1.5 block">下次聯絡日期 *</label>
                                             <input type="date" value={nextContactDate} onChange={e => setNextContactDate(e.target.value)} required className="w-full glass-input px-4 py-3 rounded-xl" />
                                             <label className="flex items-center space-x-2 mt-2 cursor-pointer select-none">
-                                                <input type="checkbox" checked={addToCalendar} onChange={e => setAddToCalendar(e.target.checked)} className="w-4 h-4 rounded accent-purple-500" />
+                                                <input type="checkbox" checked={addToCalendar} onChange={e => setAddToCalendar(e.target.checked)} className="w-4 h-4 rounded accent-[#61C5C7]" />
                                                 <span className="text-sm text-slate-300">📅 建立 Google Calendar 提醒活動</span>
                                             </label>
                                         </div>
@@ -954,7 +951,7 @@ export default function DashboardClient() {
 
                                 <div className="pt-4 flex space-x-3">
                                     <button type="button" onClick={() => setIsAddingNew(false)} className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition border border-white/10">取消</button>
-                                    <button type="submit" className={`flex-1 py-3 px-4 rounded-xl font-medium text-white transition shadow-lg ${isProspectMode ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-500/20' : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-purple-500/20'}`}>
+                                    <button type="submit" className={`flex-1 py-3 px-4 rounded-xl font-medium text-white transition shadow-lg ${isProspectMode ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-500/20' : 'tpp-primary-button shadow-[#61C5C7]/20'}`}>
                                         {isProspectMode ? '🎯 建立待開發商家' : '建立據點並儲存'}
                                     </button>
                                 </div>

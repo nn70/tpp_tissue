@@ -80,18 +80,18 @@ export default function EventCheckInClient({ event, token, isLoggedIn }: Props) 
     }, [event.id, isLoggedIn, token]);
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100 pt-20 px-4">
+        <main className="min-h-screen tpp-page pt-20 px-4">
             <div className="mx-auto max-w-xl">
                 <section className="glass-panel rounded-2xl p-6 sm:p-8 text-center">
                     <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
                         {state === "checking" ? (
-                            <Loader2 className="h-8 w-8 animate-spin text-blue-300" />
+                            <Loader2 className="h-8 w-8 animate-spin text-[#61C5C7]" />
                         ) : state === "success" ? (
-                            <CheckCircle2 className="h-8 w-8 text-emerald-300" />
+                            <CheckCircle2 className="h-8 w-8 text-[#61C5C7]" />
                         ) : state === "error" ? (
                             <XCircle className="h-8 w-8 text-red-300" />
                         ) : (
-                            <QrCode className="h-8 w-8 text-blue-300" />
+                            <QrCode className="h-8 w-8 text-[#61C5C7]" />
                         )}
                     </div>
 
@@ -108,7 +108,7 @@ export default function EventCheckInClient({ event, token, isLoggedIn }: Props) 
                     {!isLoggedIn && (
                         <a
                             href={callbackUrl}
-                            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold transition hover:bg-blue-500 sm:w-auto"
+                            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl tpp-primary-button px-5 py-3 font-semibold transition  sm:w-auto"
                         >
                             <LogIn className="h-4 w-4" />
                             使用 Google 登入並報到

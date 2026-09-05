@@ -14,28 +14,27 @@ export default function Navigation() {
     const isAdmin = pathname === "/admin";
     const isVolunteerAdmin = pathname === "/volunteer-admin";
     const canManageContent = session?.user?.role === "ADMIN" || session?.user?.role === "EDITOR";
+    const baseLinkClass = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shrink-0";
+    const inactiveLinkClass = "text-slate-300 hover:text-white hover:bg-white/10";
+    const activeLinkClass = "bg-[#61C5C7]/18 text-[#D9FFFF] ring-1 ring-[#61C5C7]/50 shadow-lg shadow-[#61C5C7]/10";
 
     return (
-        <nav className="fixed top-0 w-full z-50 bg-[#0f1016]/80 backdrop-blur-xl border-b border-white/10 shrink-0">
+        <nav className="fixed top-0 w-full z-50 bg-[#071820]/88 backdrop-blur-xl border-b border-[#61C5C7]/20 shrink-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-blue-500 shadow-lg shadow-purple-500/20 flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">H</span>
+                        <div className="w-8 h-8 rounded-xl tpp-brand-mark">
+                            <span className="text-white font-bold text-lg">眾</span>
                         </div>
                         <span className="text-white font-bold text-xl tracking-wide hidden sm:block">
-                            Hub
+                            TPP Hub
                         </span>
                     </div>
 
                     <div className="flex space-x-1 sm:space-x-4 overflow-x-auto hide-scrollbar flex-1 px-2 mx-2">
                         <Link
                             href="/dashboard"
-                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
-                                ${isDashboard
-                                    ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/50 shadow-lg shadow-purple-500/10'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                                }`}
+                            className={`${baseLinkClass} ${isDashboard ? activeLinkClass : inactiveLinkClass}`}
                         >
                             <Map className="w-4 h-4" />
                             <span className="hidden sm:inline">物資發放紀錄</span>
@@ -44,11 +43,7 @@ export default function Navigation() {
 
                         <Link
                             href="/forum"
-                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
-                                ${isForum
-                                    ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/50 shadow-lg shadow-blue-500/10'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                                }`}
+                            className={`${baseLinkClass} ${isForum ? activeLinkClass : inactiveLinkClass}`}
                         >
                             <Users className="w-4 h-4" />
                             <span className="hidden sm:inline">志工報名系統(可追蹤)</span>
@@ -57,11 +52,7 @@ export default function Navigation() {
 
                         <Link
                             href="/volunteer-rewards"
-                            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
-                                ${isRewards
-                                    ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/50 shadow-lg shadow-amber-500/10'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                                }`}
+                            className={`${baseLinkClass} ${isRewards ? activeLinkClass : inactiveLinkClass}`}
                         >
                             <Award className="w-4 h-4" />
                             <span className="hidden sm:inline">志工獎勵</span>
@@ -71,11 +62,7 @@ export default function Navigation() {
                         {canManageContent && (
                             <Link
                                 href="/volunteer-admin"
-                                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
-                                    ${isVolunteerAdmin
-                                        ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                                    }`}
+                                className={`${baseLinkClass} ${isVolunteerAdmin ? activeLinkClass : inactiveLinkClass}`}
                             >
                                 <CalendarCheck className="w-4 h-4" />
                                 <span className="hidden sm:inline">志工後台</span>
@@ -86,11 +73,7 @@ export default function Navigation() {
                         {session?.user?.role === "ADMIN" && (
                             <Link
                                 href="/admin"
-                                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shrink-0
-                                    ${isAdmin
-                                        ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/50 shadow-lg shadow-amber-500/10'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                                    }`}
+                                className={`${baseLinkClass} ${isAdmin ? activeLinkClass : inactiveLinkClass}`}
                             >
                                 <Shield className="w-4 h-4" />
                                 <span className="hidden sm:inline">權限管理</span>
@@ -103,7 +86,7 @@ export default function Navigation() {
                         {session && (
                             <button
                                 onClick={() => signOut({ callbackUrl: '/login' })}
-                                className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+                                className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors rounded-xl hover:bg-white/10"
                             >
                                 <LogOut className="w-4 h-4" />
                                 <span className="hidden sm:inline">登出</span>

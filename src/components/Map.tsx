@@ -171,7 +171,7 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
                                             </p>
                                             <p className="flex justify-between items-center pt-1.5">
                                                 <span className="text-gray-500">歷史發放:</span>
-                                                <span className="text-base font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full">{totalQuantity} 盒</span>
+                                                <span className="text-base font-bold text-[#2A8F93] bg-[#E7F6F6] px-2.5 py-0.5 rounded-full">{totalQuantity} 盒</span>
                                             </p>
                                         </div>
                                     )}
@@ -185,8 +185,8 @@ export default function Map({ locations, selectedLocationId, onSelectMarker }: M
     ) : (
         <div className="flex items-center justify-center w-full h-full bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
             <div className="animate-pulse flex flex-col items-center">
-                <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-purple-200">Loading Map Engine...</p>
+                <div className="w-12 h-12 border-4 border-[#61C5C7] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-[#D9FFFF]">Loading Map Engine...</p>
             </div>
         </div>
     );

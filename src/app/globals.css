@@ -8,38 +8,90 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7fbfb;
+  --foreground: #173246;
+  --tpp-mint: #61c5c7;
+  --tpp-mint-dark: #2aa8ac;
+  --tpp-navy: #3b597d;
+  --tpp-ink: #173246;
+  --tpp-soft: #e7f6f6;
+  --tpp-line: rgba(97, 197, 199, 0.24);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #071820;
+    --foreground: #f7fbfb;
   }
 }
 
 @layer base {
+  html {
+    background: #071820;
+  }
+
   body {
-    background: linear-gradient(-45deg, #0f172a, #1e293b, #3b0764, #0f172a);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    color: #f8fafc;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(97, 197, 199, 0.16), transparent 34rem),
+      linear-gradient(135deg, #071820 0%, #102d3a 46%, #3b597d 100%);
+    color: var(--foreground);
     font-family: var(--font-sans), sans-serif;
   }
-}
 
-@keyframes gradientBG {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  ::selection {
+    background: rgba(97, 197, 199, 0.34);
+    color: #ffffff;
+  }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply border shadow-2xl backdrop-blur-xl;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.055));
+    border-color: var(--tpp-line);
+    box-shadow: 0 22px 60px rgba(3, 20, 27, 0.28);
   }
+
   .glass-input {
-    @apply bg-black/20 border border-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 backdrop-blur-md transition-all duration-300;
+    @apply border text-white placeholder-white/50 backdrop-blur-md transition-all duration-300;
+    background: rgba(7, 24, 32, 0.38);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .glass-input:focus {
+    outline: none;
+    border-color: rgba(97, 197, 199, 0.74);
+    box-shadow: 0 0 0 3px rgba(97, 197, 199, 0.22);
+  }
+
+  .tpp-page {
+    @apply min-h-screen text-slate-100;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(97, 197, 199, 0.16), transparent 30rem),
+      linear-gradient(135deg, #071820 0%, #102d3a 48%, #3b597d 100%);
+  }
+
+  .tpp-primary-button {
+    @apply inline-flex items-center justify-center font-semibold text-white transition disabled:opacity-60;
+    background: linear-gradient(135deg, var(--tpp-mint-dark), var(--tpp-navy));
+    box-shadow: 0 14px 34px rgba(42, 168, 172, 0.22);
+  }
+
+  .tpp-primary-button:hover {
+    filter: brightness(1.08);
+  }
+
+  .tpp-soft-chip {
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm;
+    background: rgba(97, 197, 199, 0.12);
+    color: #d9ffff;
+    border: 1px solid rgba(97, 197, 199, 0.18);
+  }
+
+  .tpp-brand-mark {
+    @apply flex items-center justify-center font-black text-white;
+    background: linear-gradient(135deg, var(--tpp-mint), var(--tpp-navy));
+    box-shadow: 0 12px 32px rgba(97, 197, 199, 0.2);
   }
 }

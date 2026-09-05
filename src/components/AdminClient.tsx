@@ -62,11 +62,11 @@ export default function AdminClient() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f1016] text-slate-100 pt-20 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center space-x-3 pb-6 border-b border-white/10">
-                    <div className="bg-amber-500/20 p-2.5 rounded-xl">
-                        <Shield className="w-6 h-6 text-amber-500" />
+                    <div className="bg-[#61C5C7]/14 p-2.5 rounded-xl">
+                        <Shield className="w-6 h-6 text-[#61C5C7]" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold">人員權限管理</h1>
@@ -75,7 +75,7 @@ export default function AdminClient() {
                 </div>
 
                 {message && (
-                    <div className={`p-4 rounded-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
+                    <div className={`p-4 rounded-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-emerald-500/20 text-[#61C5C7]' : 'bg-red-500/20 text-red-300'
                         }`}>
                         {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
                         <span>{message.text}</span>
@@ -125,8 +125,8 @@ export default function AdminClient() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
-                                                        user.role === 'EDITOR' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'ADMIN' ? 'bg-amber-500/20 text-[#F4F7F7] border-amber-500/30' :
+                                                        user.role === 'EDITOR' ? 'bg-blue-500/20 text-[#61C5C7] border-blue-500/30' :
                                                             'bg-slate-500/20 text-slate-300 border-slate-500/30'
                                                     }`}>
                                                     {user.role === 'ADMIN' ? '最高管理員' : user.role === 'EDITOR' ? '小編 (可編輯)' : '一般註冊者 (無權限)'}

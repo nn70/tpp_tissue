@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Distribution Tracker | 面紙發放紀錄平台",
-  description: "Modern location-based tracking for tissue distributions.",
+  title: "TPP Hub | 物資發放與志工活動平台",
+  description: "物資發放紀錄、志工活動報名、QR Code 報到與獎勵進度管理平台。",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="zh-Hant-TW">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <Navigation />

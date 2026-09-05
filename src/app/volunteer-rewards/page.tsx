@@ -6,12 +6,12 @@ const rewardIcons = [Gift, Shirt, Users, Sparkles];
 
 export default function VolunteerRewardsPage() {
     return (
-        <main className="min-h-screen bg-[#0f1016] text-slate-100 pt-20 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-6xl space-y-6 pb-10">
                 <section className="glass-panel rounded-2xl p-6 sm:p-8">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div className="max-w-2xl">
-                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-sm font-semibold text-amber-200">
+                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-3 py-1 text-sm font-semibold text-[#D9FFFF]">
                                 <Award className="h-4 w-4" />
                                 志工獎勵說明
                             </div>
@@ -22,7 +22,7 @@ export default function VolunteerRewardsPage() {
                         </div>
                         <Link
                             href="/forum"
-                            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold transition hover:bg-blue-500"
+                            className="inline-flex items-center justify-center rounded-xl tpp-primary-button px-5 py-3 text-sm font-semibold transition "
                         >
                             前往活動報名
                         </Link>
@@ -37,7 +37,7 @@ export default function VolunteerRewardsPage() {
                             <article key={reward.times} className="glass-panel rounded-2xl p-6">
                                 <div className="flex items-start gap-4">
                                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                                        <Icon className="h-7 w-7 text-amber-300" />
+                                        <Icon className="h-7 w-7 text-[#F4F7F7]" />
                                     </div>
                                     <div>
                                         <div className="text-sm font-semibold text-slate-400">累積報到 {reward.times} 次</div>
@@ -52,7 +52,7 @@ export default function VolunteerRewardsPage() {
 
                 <section className="glass-panel rounded-2xl p-6">
                     <div className="flex items-start gap-3">
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#61C5C7]" />
                         <div>
                             <h2 className="font-bold text-white">計算方式</h2>
                             <p className="mt-2 leading-7 text-slate-300">
