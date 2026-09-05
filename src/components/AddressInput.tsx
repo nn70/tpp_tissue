@@ -8,12 +8,14 @@ interface AddressInputProps {
         address: string;
         lat: number;
         lng: number;
+        placeId?: string;
     }) => void;
+    onInputChange?: (value: string) => void;
     placeholder?: string;
     defaultValue?: string;
 }
 
-export default function AddressInput({ onPlaceSelected, placeholder = "請輸入欲發放的地點或地址", defaultValue = "" }: AddressInputProps) {
+export default function AddressInput({ onPlaceSelected, onInputChange, placeholder = "請輸入欲發放的地點或地址", defaultValue = "" }: AddressInputProps) {
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
     const [inputValue, setInputValue] = useState(defaultValue);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +46,7 @@ export default function AddressInput({ onPlaceSelected, placeholder = "請輸入
                     address: addr,
                     lat: place.geometry.location.lat(),
                     lng: place.geometry.location.lng(),
+                    placeId: place.place_id,
                 });
             }
         }
@@ -56,7 +59,10 @@ export default function AddressInput({ onPlaceSelected, placeholder = "請輸入
             <input
                 type="text"
                 value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
+                onChange={e => {
+                    setInputValue(e.target.value);
+                    onInputChange?.(e.target.value);
+                }}
                 placeholder={placeholder}
                 className="w-full glass-input px-4 py-3 rounded-xl text-black md:text-white"
                 ref={inputRef}

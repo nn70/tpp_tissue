@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarPlus, CheckCircle2, Gift, Link2, Loader2, RefreshCw, Users } from "lucide-react";
+import AddressInput from "@/components/AddressInput";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 
@@ -123,6 +124,17 @@ export default function VolunteerAdminClient() {
         }
     };
 
+    const handlePlaceSelected = (place: { address: string; lat: number; lng: number; placeId?: string }) => {
+        const query = encodeURIComponent(place.address);
+        const placeParam = place.placeId ? `&query_place_id=${encodeURIComponent(place.placeId)}` : "";
+
+        setForm((prev) => ({
+            ...prev,
+            location: place.address,
+            mapUrl: `https://www.google.com/maps/search/?api=1&query=${query}${placeParam}`,
+        }));
+    };
+
     const updateRegistration = async (registrationId: string, status: RegistrationStatus) => {
         setUpdatingId(registrationId);
 
@@ -202,12 +214,15 @@ export default function VolunteerAdminClient() {
                             placeholder="活動說明"
                             className="w-full min-h-24 glass-input rounded-xl px-4 py-3"
                         />
-                        <input
-                            value={form.location}
-                            onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-                            placeholder="集合地點"
-                            className="w-full glass-input rounded-xl px-4 py-3"
-                        />
+                        <div className="space-y-1">
+                            <span className="text-sm text-slate-300">集合地點</span>
+                            <AddressInput
+                                defaultValue={form.location}
+                                onPlaceSelected={handlePlaceSelected}
+                                onInputChange={(value) => setForm((prev) => ({ ...prev, location: value }))}
+                                placeholder="輸入地點或地址，例如：虎林"
+                            />
+                        </div>
                         <input
                             value={form.mapUrl}
                             onChange={(e) => setForm((prev) => ({ ...prev, mapUrl: e.target.value }))}
