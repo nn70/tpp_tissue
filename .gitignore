@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /.npm-cache
+/.git-askpass.cmd
 /.pnp
 .pnp.*
 .yarn/*
