@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isValidPhone, normalizePhone } from "@/lib/phone";
 
 type RouteParams = {
     params: Promise<{
@@ -20,6 +21,11 @@ export async function POST(request: Request, props: RouteParams) {
         const { id } = await props.params;
         const body = await request.json().catch(() => ({}));
         const token = typeof body.token === "string" ? body.token : "";
+        const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+
+        if (!phone || !isValidPhone(phone)) {
+            return NextResponse.json({ error: "請輸入有效的電話號碼。" }, { status: 400 });
+        }
 
         const event = await prisma.volunteerEvent.findFirst({
             where: {
@@ -39,20 +45,43 @@ export async function POST(request: Request, props: RouteParams) {
         }
 
         const now = new Date();
-        const registration = await prisma.volunteerRegistration.upsert({
+        const existingRegistration = await prisma.volunteerRegistration.findUnique({
             where: {
                 eventId_userId: {
                     eventId: event.id,
                     userId: session.user.id,
                 },
             },
-            create: {
-                eventId: event.id,
-                userId: session.user.id,
-                status: "ATTENDED",
-                checkedInAt: now,
+            include: {
+                event: {
+                    select: {
+                        title: true,
+                        startsAt: true,
+                    },
+                },
             },
-            update: {
+        });
+
+        if (!existingRegistration || existingRegistration.status === "CANCELLED") {
+            return NextResponse.json({ error: "查無此活動的有效報名紀錄，請先確認是否已完成報名。" }, { status: 400 });
+        }
+
+        if (!existingRegistration.phone) {
+            return NextResponse.json({ error: "這筆報名資料沒有電話號碼，請找現場工作人員協助。" }, { status: 400 });
+        }
+
+        if (normalizePhone(existingRegistration.phone) !== normalizePhone(phone)) {
+            return NextResponse.json({ error: "電話號碼與報名時登記的不一致，報到失敗。" }, { status: 400 });
+        }
+
+        const registration = await prisma.volunteerRegistration.update({
+            where: {
+                eventId_userId: {
+                    eventId: event.id,
+                    userId: session.user.id,
+                },
+            },
+            data: {
                 status: "ATTENDED",
                 checkedInAt: now,
             },

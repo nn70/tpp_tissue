@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Loader2, LogIn, QrCode, XCircle } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
+import { CheckCircle2, Loader2, LogIn, Phone, QrCode, XCircle } from "lucide-react";
 
 type CheckInEvent = {
     id: string;
@@ -32,52 +32,38 @@ function formatDateTime(value: string) {
 }
 
 export default function EventCheckInClient({ event, token, isLoggedIn }: Props) {
-    const [state, setState] = useState<CheckInState>(isLoggedIn ? "checking" : "idle");
-    const [message, setMessage] = useState(isLoggedIn ? "正在確認你的報到..." : "請先登入 Google 帳號完成報到。");
+    const [state, setState] = useState<CheckInState>("idle");
+    const [phone, setPhone] = useState("");
+    const [message, setMessage] = useState(isLoggedIn ? "請輸入報名時留下的電話號碼完成報到。" : "請先登入 Google 帳號完成報到。");
     const callbackUrl = useMemo(() => {
         const path = `/events/${event.slug || event.id}/check-in?token=${encodeURIComponent(token)}`;
         return `/api/auth/signin/google?callbackUrl=${encodeURIComponent(path)}`;
     }, [event.id, event.slug, token]);
 
-    useEffect(() => {
-        if (!isLoggedIn) return;
+    const checkIn = async (e: FormEvent) => {
+        e.preventDefault();
+        setState("checking");
+        setMessage("正在確認你的報到...");
 
-        let cancelled = false;
+        try {
+            const res = await fetch(`/api/volunteer-events/${event.id}/check-in`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, phone }),
+            });
 
-        async function checkIn() {
-            setState("checking");
-            setMessage("正在確認你的報到...");
-
-            try {
-                const res = await fetch(`/api/volunteer-events/${event.id}/check-in`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ token }),
-                });
-
-                if (!res.ok) {
-                    const error = await res.json().catch(() => ({}));
-                    throw new Error(error.error || "報到失敗，請找現場工作人員協助。");
-                }
-
-                if (!cancelled) {
-                    setState("success");
-                    setMessage("報到成功！這場活動已經列入你的出席紀錄。");
-                }
-            } catch (error) {
-                if (!cancelled) {
-                    setState("error");
-                    setMessage(error instanceof Error ? error.message : "報到失敗，請找現場工作人員協助。");
-                }
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                throw new Error(error.error || "報到失敗，請找現場工作人員協助。");
             }
+
+            setState("success");
+            setMessage("報到成功！這場活動已經列入你的出席紀錄。");
+        } catch (error) {
+            setState("error");
+            setMessage(error instanceof Error ? error.message : "報到失敗，請找現場工作人員協助。");
         }
-
-        checkIn();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [event.id, isLoggedIn, token]);
+    };
 
     return (
         <main className="min-h-screen tpp-page pt-20 px-4">
@@ -113,6 +99,36 @@ export default function EventCheckInClient({ event, token, isLoggedIn }: Props) 
                             <LogIn className="h-4 w-4" />
                             使用 Google 登入並報到
                         </a>
+                    )}
+
+                    {isLoggedIn && state !== "success" && (
+                        <form onSubmit={checkIn} className="mt-6 space-y-4 text-left">
+                            <div>
+                                <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                                    <Phone className="h-4 w-4 text-[#61C5C7]" />
+                                    報名時登記的電話
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="請輸入報名時留下的電話"
+                                    required
+                                    className="w-full glass-input rounded-xl px-4 py-3"
+                                />
+                                <p className="mt-2 text-xs leading-5 text-slate-400">
+                                    電話需與報名時登記的號碼一致，系統才會完成報到。
+                                </p>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={state === "checking"}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl tpp-primary-button px-5 py-3 font-semibold transition disabled:opacity-50"
+                            >
+                                {state === "checking" ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                                確認報到
+                            </button>
+                        </form>
                     )}
 
                     <div className="mt-6">

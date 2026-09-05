@@ -25,11 +25,13 @@ export async function GET() {
                     userId: true,
                     createdAt: true,
                     note: true,
+                    phone: true,
                     user: {
                         select: {
                             name: true,
                             email: true,
                             image: true,
+                            phone: true,
                         },
                     },
                 },
@@ -53,6 +55,9 @@ export async function GET() {
             checkInToken: manage ? checkInToken : undefined,
             registrations: manage ? event.registrations : undefined,
         })),
+        currentUserPhone: session.user.id
+            ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { phone: true } }))?.phone ?? ""
+            : "",
         rewardProgress: getRewardProgress(attendedCount),
     });
 }

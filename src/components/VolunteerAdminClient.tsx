@@ -11,6 +11,7 @@ type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 type AdminRegistration = {
     id: string;
     note: string | null;
+    phone: string | null;
     status: RegistrationStatus;
     checkedInAt: string | null;
     createdAt: string;
@@ -19,6 +20,7 @@ type AdminRegistration = {
         name: string | null;
         email: string | null;
         image: string | null;
+        phone: string | null;
     };
 };
 
@@ -44,6 +46,7 @@ type VolunteerStats = {
     name: string | null;
     email: string | null;
     image: string | null;
+    phone: string | null;
     attendedCount: number;
     next: { times: number; title: string; description: string } | null;
     remainingToNext: number;
@@ -506,6 +509,7 @@ export default function VolunteerAdminClient() {
                                                         <div>
                                                             <div className="font-medium text-slate-200">{registration.user.name || "未命名志工"}</div>
                                                             <div className="text-xs text-slate-400">{registration.user.email}</div>
+                                                            <div className="text-xs text-slate-400">報名電話：{registration.phone || "未留電話"}</div>
                                                             {registration.note && <div className="text-xs text-slate-300 mt-1">備註：{registration.note}</div>}
                                                             {registration.checkedInAt && <div className="text-xs text-[#61C5C7] mt-1">報到：{formatDateTime(registration.checkedInAt)}</div>}
                                                         </div>
@@ -554,6 +558,7 @@ export default function VolunteerAdminClient() {
                                         <td className="py-4 pr-4">
                                             <div className="font-medium text-slate-200">{volunteer.name || "未命名志工"}</div>
                                             <div className="text-xs text-slate-400">{volunteer.email}</div>
+                                            <div className="text-xs text-slate-400">電話：{volunteer.phone || "未留電話"}</div>
                                         </td>
                                         <td className="py-4 px-4 font-bold">{volunteer.attendedCount}</td>
                                         <td className="py-4 px-4 text-sm text-slate-300">

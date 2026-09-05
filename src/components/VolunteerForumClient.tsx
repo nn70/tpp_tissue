@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, UserCheck, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, Phone, UserCheck, Users } from "lucide-react";
 import { askToAddGoogleCalendar } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
@@ -21,6 +21,7 @@ type VolunteerEvent = {
         id: string;
         status: RegistrationStatus;
         note: string | null;
+        phone: string | null;
     } | null;
 };
 
@@ -37,6 +38,7 @@ export default function VolunteerForumClient() {
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
     const [notes, setNotes] = useState<Record<string, string>>({});
+    const [phone, setPhone] = useState("");
     const [message, setMessage] = useState<string | null>(null);
 
     const fetchEvents = async () => {
@@ -46,6 +48,7 @@ export default function VolunteerForumClient() {
                 const data = await res.json();
                 setEvents(data.events);
                 setRewardProgress(data.rewardProgress);
+                setPhone(data.currentUserPhone ?? "");
             }
         } finally {
             setLoading(false);
@@ -65,11 +68,17 @@ export default function VolunteerForumClient() {
         setSavingId(eventId);
         setMessage(null);
 
+        if (!phone.trim()) {
+            setMessage("請先填寫聯絡電話，方便活動前聯絡與現場報到確認。");
+            setSavingId(null);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/volunteer-events/${eventId}/registrations`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note: notes[eventId] ?? "" }),
+                body: JSON.stringify({ note: notes[eventId] ?? "", phone }),
             });
 
             if (!res.ok) {
@@ -166,6 +175,27 @@ export default function VolunteerForumClient() {
                     </div>
                 </section>
 
+                <section className="glass-panel rounded-2xl p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                                <Phone className="w-4 h-4 text-[#61C5C7]" />
+                                志工聯絡電話
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-slate-400">
+                                第一次報名請留下電話，之後系統會自動帶出；現場 QR 報到需輸入相同電話。
+                            </p>
+                        </div>
+                        <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="請輸入手機或聯絡電話"
+                            className="w-full sm:max-w-xs glass-input rounded-xl px-4 py-3"
+                        />
+                    </div>
+                </section>
+
                 {message && (
                     <div className="rounded-xl border border-[#61C5C7]/25 bg-[#61C5C7]/10 px-4 py-3 text-[#D9FFFF]">
                         {message}
@@ -211,6 +241,12 @@ export default function VolunteerForumClient() {
                                     <div className="text-sm text-slate-400">
                                         已報名 {event.registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
                                     </div>
+
+                                    {isRegistered && (
+                                        <div className="rounded-xl border border-[#61C5C7]/20 bg-[#61C5C7]/10 px-3 py-2 text-sm text-[#D9FFFF]">
+                                            報到電話：{event.currentUserRegistration?.phone || phone || "尚未登記，請聯絡工作人員補登"}
+                                        </div>
+                                    )}
 
                                     {!isRegistered && (
                                         <textarea

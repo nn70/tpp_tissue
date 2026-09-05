@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isValidPhone, normalizePhone } from "@/lib/phone";
 
 interface RouteParams {
     params: Promise<{
@@ -20,6 +21,18 @@ export async function POST(request: Request, props: RouteParams) {
         const { id } = await props.params;
         const body = await request.json().catch(() => ({}));
         const note = typeof body.note === "string" ? body.note.trim() : "";
+        const inputPhone = typeof body.phone === "string" ? body.phone.trim() : "";
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { phone: true },
+        });
+        const phone = inputPhone || user?.phone || "";
+
+        if (!phone || !isValidPhone(phone)) {
+            return NextResponse.json({ error: "Phone required" }, { status: 400 });
+        }
+
+        const normalizedPhone = normalizePhone(phone);
 
         const event = await prisma.volunteerEvent.findUnique({
             where: { id },
@@ -47,13 +60,22 @@ export async function POST(request: Request, props: RouteParams) {
             create: {
                 eventId: id,
                 userId: session.user.id,
+                phone: normalizedPhone,
                 note: note || null,
             },
             update: {
                 status: "REGISTERED",
+                phone: existingRegistration?.phone || normalizedPhone,
                 note: note || existingRegistration?.note || null,
             },
         });
+
+        if (!user?.phone || normalizePhone(user.phone) !== normalizedPhone) {
+            await prisma.user.update({
+                where: { id: session.user.id },
+                data: { phone: normalizedPhone },
+            });
+        }
 
         return NextResponse.json(registration, { status: 201 });
     } catch (error) {

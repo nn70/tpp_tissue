@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, UserCheck } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, Phone, UserCheck } from "lucide-react";
 import { askToAddGoogleCalendar, buildGoogleCalendarUrl } from "@/lib/calendar";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
@@ -24,12 +24,14 @@ type EventDetail = {
         id: string;
         status: RegistrationStatus;
         note: string | null;
+        phone: string | null;
     } | null;
 };
 
 type Props = {
     event: EventDetail;
     isLoggedIn: boolean;
+    currentUserPhone: string;
 };
 
 function getEventStatus(event: EventDetail) {
@@ -53,8 +55,9 @@ function formatDateTime(value: string) {
     }).format(new Date(value));
 }
 
-export default function EventDetailClient({ event, isLoggedIn }: Props) {
+export default function EventDetailClient({ event, isLoggedIn, currentUserPhone }: Props) {
     const [note, setNote] = useState(event.currentUserRegistration?.note ?? "");
+    const [phone, setPhone] = useState(event.currentUserRegistration?.phone ?? currentUserPhone);
     const [registration, setRegistration] = useState(event.currentUserRegistration);
     const [registrationCount, setRegistrationCount] = useState(event.registrationCount);
     const [saving, setSaving] = useState(false);
@@ -70,11 +73,17 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
         setSaving(true);
         setMessage(null);
 
+        if (!phone.trim()) {
+            setMessage("請先填寫聯絡電話，方便活動前聯絡與現場報到確認。");
+            setSaving(false);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/volunteer-events/${event.id}/registrations`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note }),
+                body: JSON.stringify({ note, phone }),
             });
 
             if (!res.ok) {
@@ -199,12 +208,34 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                                 <CheckCircle2 className="w-5 h-5" />
                                 你已完成報名
                             </div>
+                            {(registration?.phone || currentUserPhone) && (
+                                <p className="text-sm text-[#D9FFFF]/75 mt-2">
+                                    報到電話：{registration?.phone || currentUserPhone}
+                                </p>
+                            )}
                             <p className="text-sm text-[#D9FFFF]/75 mt-2">活動結束後由後台確認出席，才會累計獎勵次數。</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             <div className="text-sm text-slate-400">
                                 已報名 {registrationCount} 人{event.capacity ? `，預期 ${event.capacity} 人` : ""}
+                            </div>
+                            <div>
+                                <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                                    <Phone className="w-4 h-4 text-[#61C5C7]" />
+                                    聯絡電話
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="請輸入手機或聯絡電話"
+                                    className="w-full glass-input rounded-xl px-4 py-3"
+                                    required
+                                />
+                                <p className="mt-2 text-xs leading-5 text-slate-400">
+                                    第一次報名會保存此電話，之後報名會自動帶出；現場 QR 報到時需輸入相同電話。
+                                </p>
                             </div>
                             <textarea
                                 value={note}

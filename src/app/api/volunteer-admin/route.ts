@@ -25,6 +25,7 @@ export async function GET() {
                                 name: true,
                                 email: true,
                                 image: true,
+                                phone: true,
                             },
                         },
                     },
@@ -42,6 +43,7 @@ export async function GET() {
                 name: true,
                 email: true,
                 image: true,
+                phone: true,
                 volunteerRegistrations: {
                     where: { status: "ATTENDED" },
                     select: { id: true },
@@ -58,6 +60,7 @@ export async function GET() {
             name: volunteer.name,
             email: volunteer.email,
             image: volunteer.image,
+            phone: volunteer.phone,
             ...getRewardProgress(volunteer.volunteerRegistrations.length),
         })),
     });

@@ -31,6 +31,7 @@ export default async function EventPage({ params }: PageProps) {
                     status: true,
                     userId: true,
                     note: true,
+                    phone: true,
                 },
             },
         },
@@ -43,10 +44,14 @@ export default async function EventPage({ params }: PageProps) {
     const currentUserRegistration = session?.user
         ? event.registrations.find((registration) => registration.userId === session.user.id) ?? null
         : null;
+    const currentUserPhone = session?.user
+        ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { phone: true } }))?.phone ?? ""
+        : "";
 
     return (
         <EventDetailClient
             isLoggedIn={Boolean(session?.user)}
+            currentUserPhone={currentUserPhone}
             event={{
                 id: event.id,
                 slug: event.slug,
