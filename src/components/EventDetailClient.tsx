@@ -64,7 +64,8 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
     const isClosed = closesAt < Date.now() || new Date(event.startsAt).getTime() < Date.now();
     const isRegistered = registration?.status === "REGISTERED" || registration?.status === "ATTENDED";
     const isFull = Boolean(event.capacity && registrationCount >= event.capacity && !isRegistered);
-    const mapUrl = event.mapUrl || (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` : null);
+    const mapQuery = event.location || event.mapUrl;
+    const mapEmbedUrl = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : null;
 
     const submitRegistration = async () => {
         setSaving(true);
@@ -135,13 +136,19 @@ export default function EventDetailClient({ event, isLoggedIn }: Props) {
                         </div>
                     </div>
 
+                    {mapEmbedUrl && (
+                        <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                            <iframe
+                                title={`${event.title} 活動地圖`}
+                                src={mapEmbedUrl}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                className="h-72 w-full border-0"
+                            />
+                        </div>
+                    )}
+
                     <div className="mt-5 flex flex-wrap gap-3">
-                        {mapUrl && (
-                            <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm font-semibold transition">
-                                <MapPin className="w-4 h-4" />
-                                查看地圖
-                            </a>
-                        )}
                         <a href={buildGoogleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold transition">
                             <ExternalLink className="w-4 h-4" />
                             加入 Google 行事曆
