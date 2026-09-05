@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, CheckCircle2, Gift, Loader2, RefreshCw, Users } from "lucide-react";
+import Link from "next/link";
+import { CalendarPlus, CheckCircle2, Gift, Link2, Loader2, RefreshCw, Users } from "lucide-react";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 
@@ -20,11 +21,15 @@ type AdminRegistration = {
 
 type AdminEvent = {
     id: string;
+    slug: string | null;
     title: string;
     description: string | null;
     location: string | null;
+    mapUrl: string | null;
+    coverImageUrl: string | null;
     startsAt: string;
     endsAt: string | null;
+    registrationDeadline: string | null;
     capacity: number | null;
     isActive: boolean;
     registrations: AdminRegistration[];
@@ -55,10 +60,14 @@ export default function VolunteerAdminClient() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [form, setForm] = useState({
         title: "",
+        slug: "",
         description: "",
         location: "",
+        mapUrl: "",
+        coverImageUrl: "",
         startsAt: "",
         endsAt: "",
+        registrationDeadline: "",
         capacity: "",
     });
 
@@ -104,7 +113,7 @@ export default function VolunteerAdminClient() {
             });
 
             if (res.ok) {
-                setForm({ title: "", description: "", location: "", startsAt: "", endsAt: "", capacity: "" });
+                setForm({ title: "", slug: "", description: "", location: "", mapUrl: "", coverImageUrl: "", startsAt: "", endsAt: "", registrationDeadline: "", capacity: "" });
                 await fetchAdminData();
             } else {
                 alert("建立活動失敗，請確認必填欄位。");
@@ -175,6 +184,18 @@ export default function VolunteerAdminClient() {
                             placeholder="活動名稱"
                             className="w-full glass-input rounded-xl px-4 py-3"
                         />
+                        <input
+                            value={form.slug}
+                            onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+                            placeholder="活動網址代號，例如 2026-1-31-diy"
+                            className="w-full glass-input rounded-xl px-4 py-3"
+                        />
+                        <input
+                            value={form.coverImageUrl}
+                            onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
+                            placeholder="封面圖網址，可留空"
+                            className="w-full glass-input rounded-xl px-4 py-3"
+                        />
                         <textarea
                             value={form.description}
                             onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
@@ -185,6 +206,12 @@ export default function VolunteerAdminClient() {
                             value={form.location}
                             onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
                             placeholder="集合地點"
+                            className="w-full glass-input rounded-xl px-4 py-3"
+                        />
+                        <input
+                            value={form.mapUrl}
+                            onChange={(e) => setForm((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                            placeholder="Google Maps 連結，可留空"
                             className="w-full glass-input rounded-xl px-4 py-3"
                         />
                         <div className="grid sm:grid-cols-2 gap-3">
@@ -208,6 +235,15 @@ export default function VolunteerAdminClient() {
                                 />
                             </label>
                         </div>
+                        <label className="space-y-1 block">
+                            <span className="text-sm text-slate-300">報名截止時間</span>
+                            <input
+                                type="datetime-local"
+                                value={form.registrationDeadline}
+                                onChange={(e) => setForm((prev) => ({ ...prev, registrationDeadline: e.target.value }))}
+                                className="w-full glass-input rounded-xl px-4 py-3"
+                            />
+                        </label>
                         <input
                             type="number"
                             min="1"
@@ -252,10 +288,19 @@ export default function VolunteerAdminClient() {
                                                 <h3 className="font-bold text-white">{event.title}</h3>
                                                 <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}{event.location ? `｜${event.location}` : ""}</p>
                                             </div>
-                                            <span className="text-xs text-slate-400">
-                                                {event.registrations.filter((registration) => registration.status !== "CANCELLED").length}
-                                                {event.capacity ? ` / ${event.capacity}` : ""} 人
-                                            </span>
+                                            <div className="flex flex-col items-start sm:items-end gap-2">
+                                                <span className="text-xs text-slate-400">
+                                                    {event.registrations.filter((registration) => registration.status !== "CANCELLED").length}
+                                                    {event.capacity ? ` / ${event.capacity}` : ""} 人
+                                                </span>
+                                                <Link
+                                                    href={`/events/${event.slug || event.id}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
+                                                >
+                                                    <Link2 className="w-3.5 h-3.5" />
+                                                    活動頁
+                                                </Link>
+                                            </div>
                                         </div>
 
                                         <div className="mt-4 space-y-2">

@@ -64,19 +64,27 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { title, description, location, startsAt, endsAt, capacity, isActive } = body;
+        const { title, slug, description, location, mapUrl, coverImageUrl, startsAt, endsAt, registrationDeadline, capacity, isActive } = body;
 
         if (!title?.trim() || !startsAt) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        const normalizedSlug = typeof slug === "string" && slug.trim()
+            ? slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "")
+            : `${new Date(startsAt).toISOString().slice(0, 10)}-${title.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "")}`;
+
         const event = await prisma.volunteerEvent.create({
             data: {
+                slug: normalizedSlug || undefined,
                 title: title.trim(),
                 description: description?.trim() || null,
                 location: location?.trim() || null,
+                mapUrl: mapUrl?.trim() || null,
+                coverImageUrl: coverImageUrl?.trim() || null,
                 startsAt: new Date(startsAt),
                 endsAt: endsAt ? new Date(endsAt) : null,
+                registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
                 capacity: capacity ? Number(capacity) : null,
                 isActive: isActive ?? true,
             },

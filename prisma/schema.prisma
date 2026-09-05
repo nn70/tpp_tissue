@@ -109,11 +109,15 @@ model ItemCategory {
 
 model VolunteerEvent {
   id          String   @id @default(cuid())
+  slug        String?  @unique
   title       String
   description String?
   location    String?
+  mapUrl      String?
+  coverImageUrl String?
   startsAt    DateTime
   endsAt      DateTime?
+  registrationDeadline DateTime?
   capacity    Int?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())

@@ -1,0 +1,233 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { CalendarDays, CheckCircle2, Clock, ExternalLink, Loader2, MapPin, UserCheck } from "lucide-react";
+
+type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
+
+type EventDetail = {
+    id: string;
+    slug: string | null;
+    title: string;
+    description: string | null;
+    location: string | null;
+    mapUrl: string | null;
+    coverImageUrl: string | null;
+    startsAt: string;
+    endsAt: string | null;
+    registrationDeadline: string | null;
+    capacity: number | null;
+    registrationCount: number;
+    currentUserRegistration: {
+        id: string;
+        status: RegistrationStatus;
+        note: string | null;
+    } | null;
+};
+
+type Props = {
+    event: EventDetail;
+    isLoggedIn: boolean;
+};
+
+function getEventStatus(event: EventDetail) {
+    const now = Date.now();
+    const startsAt = new Date(event.startsAt).getTime();
+    const closesAt = new Date(event.registrationDeadline ?? event.startsAt).getTime();
+
+    if (startsAt < now) return { label: "活動已結束", tone: "bg-slate-700 text-slate-200" };
+    if (closesAt < now) return { label: "報名已截止", tone: "bg-red-500/20 text-red-200 border-red-400/30" };
+    return { label: "報名開放中", tone: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30" };
+}
+
+function formatDateTime(value: string) {
+    return new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(value));
+}
+
+function buildCalendarUrl(event: EventDetail) {
+    const start = new Date(event.startsAt).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const endDate = event.endsAt ? new Date(event.endsAt) : new Date(new Date(event.startsAt).getTime() + 2 * 60 * 60 * 1000);
+    const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: event.title,
+        dates: `${start}/${end}`,
+        details: event.description ?? "",
+        location: event.location ?? "",
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export default function EventDetailClient({ event, isLoggedIn }: Props) {
+    const [note, setNote] = useState(event.currentUserRegistration?.note ?? "");
+    const [registration, setRegistration] = useState(event.currentUserRegistration);
+    const [registrationCount, setRegistrationCount] = useState(event.registrationCount);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+    const status = getEventStatus(event);
+    const closesAt = new Date(event.registrationDeadline ?? event.startsAt).getTime();
+    const isClosed = closesAt < Date.now() || new Date(event.startsAt).getTime() < Date.now();
+    const isRegistered = registration?.status === "REGISTERED" || registration?.status === "ATTENDED";
+    const isFull = Boolean(event.capacity && registrationCount >= event.capacity && !isRegistered);
+    const mapUrl = event.mapUrl || (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}` : null);
+
+    const submitRegistration = async () => {
+        setSaving(true);
+        setMessage(null);
+
+        try {
+            const res = await fetch(`/api/volunteer-events/${event.id}/registrations`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ note }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                setMessage(error.error === "Registration closed" ? "報名已截止。" : error.error || "報名失敗，請稍後再試。");
+                return;
+            }
+
+            const data = await res.json();
+            setRegistration(data);
+            setRegistrationCount((count) => count + (isRegistered ? 0 : 1));
+            setMessage("報名成功，後台已可追蹤你的參與紀錄。");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <main className="min-h-screen bg-slate-950 text-slate-100 pt-16">
+            <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
+                <Link href="/forum" className="inline-flex text-sm text-slate-300 hover:text-white mb-5">
+                    ← 返回活動列表
+                </Link>
+
+                {event.coverImageUrl && (
+                    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30 mb-6">
+                        <img src={event.coverImageUrl} alt={event.title} className="w-full max-h-[420px] object-cover" />
+                    </div>
+                )}
+
+                <section className="glass-panel rounded-2xl p-6 sm:p-8">
+                    <div className="mb-4">
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${status.tone}`}>
+                            活動 {status.label}
+                        </span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-4xl font-black text-white">{event.title}</h1>
+
+                    <div className="mt-6 grid sm:grid-cols-2 gap-4">
+                        <div className="rounded-xl bg-black/20 border border-white/10 p-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+                                <CalendarDays className="w-4 h-4 text-blue-300" />
+                                日期時間
+                            </div>
+                            <div className="font-semibold">{formatDateTime(event.startsAt)}</div>
+                            {event.endsAt && <div className="text-sm text-slate-400 mt-1">至 {formatDateTime(event.endsAt)}</div>}
+                        </div>
+
+                        <div className="rounded-xl bg-black/20 border border-white/10 p-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+                                <MapPin className="w-4 h-4 text-emerald-300" />
+                                活動地點
+                            </div>
+                            <div className="font-semibold">{event.location || "線上活動"}</div>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-3">
+                        {mapUrl && (
+                            <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm font-semibold transition">
+                                <MapPin className="w-4 h-4" />
+                                查看地圖
+                            </a>
+                        )}
+                        <a href={buildCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold transition">
+                            <ExternalLink className="w-4 h-4" />
+                            加入 Google 行事曆
+                        </a>
+                    </div>
+                </section>
+
+                <section className="mt-6 glass-panel rounded-2xl p-6 sm:p-8">
+                    <h2 className="text-2xl font-bold mb-4">活動說明</h2>
+                    <div className="whitespace-pre-wrap leading-8 text-slate-200">
+                        {event.description || "尚未填寫活動說明。"}
+                    </div>
+                </section>
+
+                <section className="mt-6 glass-panel rounded-2xl p-6 sm:p-8">
+                    <h2 className="text-2xl font-bold mb-4">立即報名</h2>
+
+                    {message && <div className="mb-4 rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-blue-200">{message}</div>}
+
+                    {!isLoggedIn ? (
+                        <div className="rounded-xl bg-black/20 border border-white/10 p-5">
+                            <div className="font-semibold text-white">請先登入 Google 帳號再報名。</div>
+                            <Link href="/login" className="mt-4 inline-flex rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-3 text-sm font-semibold transition">
+                                前往登入
+                            </Link>
+                        </div>
+                    ) : isClosed ? (
+                        <div className="rounded-xl bg-red-500/10 border border-red-400/20 p-5">
+                            <div className="flex items-center gap-2 font-semibold text-red-100">
+                                <Clock className="w-5 h-5" />
+                                報名已截止
+                            </div>
+                            <p className="text-sm text-red-100/75 mt-2">本活動已結束報名，感謝您的關注。</p>
+                        </div>
+                    ) : registration?.status === "ATTENDED" ? (
+                        <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/20 p-5">
+                            <div className="flex items-center gap-2 font-semibold text-emerald-100">
+                                <CheckCircle2 className="w-5 h-5" />
+                                已確認出席
+                            </div>
+                        </div>
+                    ) : isRegistered ? (
+                        <div className="rounded-xl bg-emerald-500/10 border border-emerald-400/20 p-5">
+                            <div className="flex items-center gap-2 font-semibold text-emerald-100">
+                                <CheckCircle2 className="w-5 h-5" />
+                                你已完成報名
+                            </div>
+                            <p className="text-sm text-emerald-100/75 mt-2">活動結束後由後台確認出席，才會累計獎勵次數。</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="text-sm text-slate-400">
+                                已報名 {registrationCount}{event.capacity ? ` / ${event.capacity}` : ""} 人
+                            </div>
+                            <textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="備註，例如可支援的時段或交通方式"
+                                className="w-full min-h-28 glass-input rounded-xl px-4 py-3"
+                            />
+                            <button
+                                type="button"
+                                onClick={submitRegistration}
+                                disabled={saving || isFull}
+                                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-6 py-3 font-semibold transition"
+                            >
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                                {isFull ? "名額已滿" : "送出報名"}
+                            </button>
+                        </div>
+                    )}
+                </section>
+            </div>
+        </main>
+    );
+}

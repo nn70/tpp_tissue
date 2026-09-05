@@ -30,6 +30,11 @@ export async function POST(request: Request, props: RouteParams) {
             return NextResponse.json({ error: "Event unavailable" }, { status: 404 });
         }
 
+        const closesAt = event.registrationDeadline ?? event.startsAt;
+        if (closesAt.getTime() < Date.now()) {
+            return NextResponse.json({ error: "Registration closed" }, { status: 400 });
+        }
+
         const activeRegistrationCount = event.registrations.filter((registration) => registration.status !== "CANCELLED").length;
         const existingRegistration = event.registrations.find((registration) => registration.userId === session.user.id);
 

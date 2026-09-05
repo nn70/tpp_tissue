@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, CheckCircle2, Gift, Loader2, MapPin, UserCheck, Users } from "lucide-react";
 
 type RegistrationStatus = "REGISTERED" | "ATTENDED" | "CANCELLED";
 
 type VolunteerEvent = {
     id: string;
+    slug: string | null;
     title: string;
     description: string | null;
     location: string | null;
@@ -216,6 +218,12 @@ export default function VolunteerForumClient() {
                                     )}
 
                                     <div className="flex gap-3">
+                                        <Link
+                                            href={`/events/${event.slug || event.id}`}
+                                            className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 px-4 py-3 text-sm font-semibold transition"
+                                        >
+                                            查看詳情
+                                        </Link>
                                         {isRegistered ? (
                                             <button
                                                 type="button"
