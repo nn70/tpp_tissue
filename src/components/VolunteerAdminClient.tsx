@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import imageCompression from "browser-image-compression";
-import { CalendarPlus, CheckCircle2, Clock, Copy, Edit3, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Save, Trash2, Users, X } from "lucide-react";
+import { CalendarPlus, CheckCircle2, ClipboardList, Clock, Copy, Edit3, Gift, History, ImagePlus, Link2, Loader2, Monitor, QrCode, RefreshCw, Save, Trash2, Users, X } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
 import { VOLUNTEER_EVENT_CATEGORIES, getVolunteerEventCoverImage } from "@/lib/volunteerEventCategories";
 import { formatTaipeiDateTimeInputValue, taipeiDateTimeFormatOptions } from "@/lib/taipeiTime";
@@ -88,6 +88,24 @@ const statusLabels: Record<RegistrationStatus, string> = {
     CANCELLED: "已取消",
 };
 
+function padDatePart(value: string | number) {
+    return String(value).padStart(2, "0");
+}
+
+function inferEventCategory(title: string) {
+    if (/垃圾車/.test(title)) return "追垃圾車";
+    if (/市場/.test(title)) return "掃菜市場";
+    if (/路口/.test(title)) return "站路口";
+    if (/手工|DIY|diy|勞作|製作/.test(title)) return "做手工";
+    if (/里民|中秋|月餅|學校日|活動/.test(title)) return "里民活動";
+    if (/輔選|競總|競選|留守/.test(title)) return "輔選";
+    return "";
+}
+
+function cleanScheduleLine(line: string) {
+    return line.replace(/^[\s🟪🟥🟧🟦🔥]+/, "").trim();
+}
+
 export default function VolunteerAdminClient() {
     const { data: session } = useSession();
     const [events, setEvents] = useState<AdminEvent[]>([]);
@@ -103,6 +121,8 @@ export default function VolunteerAdminClient() {
     const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
     const [expandedProfileUserId, setExpandedProfileUserId] = useState<string | null>(null);
     const [copiedEventId, setCopiedEventId] = useState<string | null>(null);
+    const [bulkEventText, setBulkEventText] = useState("");
+    const [bulkEventMessage, setBulkEventMessage] = useState<string | null>(null);
     const [form, setForm] = useState<EventFormState>({
         title: "",
         slug: "",
@@ -226,6 +246,57 @@ export default function VolunteerAdminClient() {
             location: place.address,
             mapUrl: `https://www.google.com/maps/search/?api=1&query=${query}${placeParam}`,
         }));
+    };
+
+    const fillEventFormFromText = () => {
+        const text = bulkEventText.trim();
+        if (!text) {
+            setBulkEventMessage("請先貼上活動文字。");
+            return;
+        }
+
+        const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        const dateMatch = text.match(/(?:^|\n)\s*[🟪\s]*(\d{1,2})\/(\d{1,2})/);
+        const timeLineIndex = lines.findIndex((line) => /\d{1,2}:\d{2}\s*[-~－–]\s*\d{1,2}:\d{2}.*《[^》]+》/.test(line));
+        const timeLine = timeLineIndex >= 0 ? lines[timeLineIndex] : "";
+        const timeMatch = timeLine.match(/(\d{1,2}):(\d{2})\s*[-~－–]\s*(\d{1,2}):(\d{2}).*《([^》]+)》/);
+        const capacityMatch = text.match(/[召招]募志工\s*(\d+)\s*名/);
+
+        if (!dateMatch || !timeMatch) {
+            setBulkEventMessage("解析失敗，請確認文字內有日期、時間區間與《活動名稱》。");
+            return;
+        }
+
+        const [, month, day] = dateMatch;
+        const [, startHour, startMinute, endHour, endMinute, title] = timeMatch;
+        const year = new Date().getFullYear();
+        const startsAt = `${year}-${padDatePart(month)}-${padDatePart(day)}T${padDatePart(startHour)}:${startMinute}`;
+        const endsAt = `${year}-${padDatePart(month)}-${padDatePart(day)}T${padDatePart(endHour)}:${endMinute}`;
+        const location = lines.slice(timeLineIndex + 1).map(cleanScheduleLine).find((line) => (
+            !/[召招]募志工/.test(line)
+            && !/^\d+[.、]/.test(line)
+            && !/行程$/.test(line)
+            && !/^《/.test(line)
+        )) ?? "";
+        const leader = lines.map(cleanScheduleLine).find((line) => /行程$/.test(line)) ?? "";
+        const mapUrl = location
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+            : "";
+
+        setForm((prev) => ({
+            ...prev,
+            title: title.trim(),
+            category: inferEventCategory(title),
+            description: [leader, `原始貼文：\n${text}`].filter(Boolean).join("\n\n"),
+            location,
+            mapUrl,
+            startsAt,
+            endsAt,
+            registrationDeadline: "",
+            capacity: capacityMatch?.[1] ?? "",
+        }));
+        setIsOnlineEvent(!location);
+        setBulkEventMessage(`已帶入「${title.trim()}」，請確認後按建立活動。`);
     };
 
     const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -545,6 +616,39 @@ export default function VolunteerAdminClient() {
                         <div className="flex items-center gap-3 mb-2">
                             <CalendarPlus className="w-5 h-5 text-[#61C5C7]" />
                             <h1 className="text-xl font-bold">建立活動</h1>
+                        </div>
+                        <div className="rounded-2xl border border-[#61C5C7]/20 bg-white/5 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                                <ClipboardList className="h-4 w-4 text-[#61C5C7]" />
+                                <span className="text-sm font-semibold text-slate-200">貼上行程自動帶入</span>
+                            </div>
+                            <textarea
+                                value={bulkEventText}
+                                onChange={(e) => {
+                                    setBulkEventText(e.target.value);
+                                    setBulkEventMessage(null);
+                                }}
+                                placeholder={"例如：\n🟪09/07(一)\n🟥甫哥行程\n🟦8:30-9:30 《敦化南京路口》\n台北市南京東路四段1號1樓 ECCO 南東門市\n🟦召募志工3名"}
+                                className="min-h-36 w-full glass-input rounded-xl px-4 py-3 text-sm"
+                            />
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs leading-5 text-slate-400">
+                                    會自動抓日期、時間、活動名稱、地點與預期人數；帶入後仍可手動修改。
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={fillEventFormFromText}
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#61C5C7]/20 px-4 py-2 text-sm font-semibold text-[#D9FFFF] transition hover:bg-[#61C5C7]/30"
+                                >
+                                    <ClipboardList className="h-4 w-4" />
+                                    解析並帶入
+                                </button>
+                            </div>
+                            {bulkEventMessage && (
+                                <div className="mt-3 rounded-xl border border-[#61C5C7]/20 bg-black/15 px-3 py-2 text-xs text-[#D9FFFF]">
+                                    {bulkEventMessage}
+                                </div>
+                            )}
                         </div>
                         <input
                             required
