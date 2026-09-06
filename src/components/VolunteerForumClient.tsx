@@ -119,7 +119,7 @@ export default function VolunteerForumClient() {
         setMessage(null);
 
         if (!name.trim() || !phone.trim()) {
-            setMessage("請填寫姓名與聯絡電話後再儲存。");
+            setMessage("請填寫 Line 名稱或本名，以及聯絡電話後再儲存。");
             setProfileSaving(false);
             return;
         }
@@ -168,7 +168,7 @@ export default function VolunteerForumClient() {
         setMessage(null);
 
         if (!name.trim() || !phone.trim()) {
-            setMessage("請先填寫姓名與聯絡電話，方便活動前聯絡與現場報到確認。");
+            setMessage("請先填寫 Line 名稱或本名，以及聯絡電話，方便活動前聯絡與現場報到確認。");
             setSavingId(null);
             return;
         }
@@ -240,7 +240,7 @@ export default function VolunteerForumClient() {
                         志工個人資料
                     </div>
                     <p className="mt-1 text-xs leading-5 text-slate-400">
-                        第一次報名請留下姓名與電話，之後系統會自動帶出。
+                        第一次報名請留下 Line 名稱或本名與電話，之後系統會自動帶出。
                     </p>
                 </div>
                 <div className="grid w-full gap-2 sm:max-w-2xl sm:grid-cols-[1fr_1fr_auto]">
@@ -250,7 +250,7 @@ export default function VolunteerForumClient() {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="請輸入姓名"
+                            placeholder="請輸入 Line 名稱或本名"
                             className="w-full glass-input rounded-xl py-3 pl-10 pr-4"
                         />
                     </label>

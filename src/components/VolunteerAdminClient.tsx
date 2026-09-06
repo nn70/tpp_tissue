@@ -102,6 +102,7 @@ export default function VolunteerAdminClient() {
     const [qrEventId, setQrEventId] = useState<string | null>(null);
     const [tokenUpdatingId, setTokenUpdatingId] = useState<string | null>(null);
     const [expandedProfileUserId, setExpandedProfileUserId] = useState<string | null>(null);
+    const [copiedEventId, setCopiedEventId] = useState<string | null>(null);
     const [form, setForm] = useState<EventFormState>({
         title: "",
         slug: "",
@@ -138,11 +139,27 @@ export default function VolunteerAdminClient() {
 
     const totals = useMemo(() => {
         const registrations = events.flatMap((event) => event.registrations);
+        const staffing = events.reduce((acc, event) => {
+            const confirmedCount = event.registrations.filter((registration) => (
+                registration.status === "REGISTERED" || registration.status === "ATTENDED"
+            )).length;
+
+            if (event.capacity && confirmedCount >= event.capacity) {
+                acc.full += 1;
+            } else if (event.capacity && confirmedCount < event.capacity) {
+                acc.understaffed += 1;
+            }
+
+            return acc;
+        }, { understaffed: 0, full: 0 });
+
         return {
             events: events.length,
             registered: registrations.filter((registration) => registration.status === "REGISTERED").length,
             waitlisted: registrations.filter((registration) => registration.status === "WAITLISTED").length,
             attended: registrations.filter((registration) => registration.status === "ATTENDED").length,
+            understaffed: staffing.understaffed,
+            full: staffing.full,
         };
     }, [events]);
     const isUploadedCover = form.coverImageUrl.startsWith("data:image/");
@@ -293,6 +310,109 @@ export default function VolunteerAdminClient() {
         await navigator.clipboard.writeText(url);
     };
 
+    const getEventRoster = (event: AdminEvent) => {
+        const confirmed = event.registrations.filter((registration) => (
+            registration.status === "REGISTERED" || registration.status === "ATTENDED"
+        ));
+        const waitlisted = event.registrations.filter((registration) => registration.status === "WAITLISTED");
+        const cancelled = event.registrations.filter((registration) => registration.status === "CANCELLED");
+
+        return {
+            confirmed,
+            waitlisted,
+            cancelled,
+            confirmedCount: confirmed.length,
+            waitlistedCount: waitlisted.length,
+            missingCount: event.capacity ? Math.max(event.capacity - confirmed.length, 0) : null,
+        };
+    };
+
+    const getStaffingStatus = (event: AdminEvent) => {
+        const roster = getEventRoster(event);
+        const startsAt = new Date(event.startsAt).getTime();
+        const hoursUntilStart = (startsAt - Date.now()) / (60 * 60 * 1000);
+
+        if (!event.capacity) {
+            return {
+                label: "未設定預期人數",
+                detail: `${roster.confirmedCount} 人已報名`,
+                className: "border-slate-300/25 bg-slate-400/10 text-slate-200",
+            };
+        }
+
+        if (roster.missingCount === 0) {
+            return {
+                label: "已滿",
+                detail: `${roster.confirmedCount} / ${event.capacity} 人`,
+                className: "border-emerald-300/30 bg-emerald-500/15 text-emerald-100",
+            };
+        }
+
+        if (hoursUntilStart <= 24) {
+            return {
+                label: `急缺 ${roster.missingCount} 人`,
+                detail: `${roster.confirmedCount} / ${event.capacity} 人，24 小時內開始`,
+                className: "border-rose-300/40 bg-rose-500/20 text-rose-100",
+            };
+        }
+
+        if (hoursUntilStart <= 72) {
+            return {
+                label: `缺 ${roster.missingCount} 人`,
+                detail: `${roster.confirmedCount} / ${event.capacity} 人，3 天內開始`,
+                className: "border-amber-300/40 bg-amber-400/20 text-amber-100",
+            };
+        }
+
+        return {
+            label: `缺 ${roster.missingCount} 人`,
+            detail: `${roster.confirmedCount} / ${event.capacity} 人`,
+            className: "border-sky-300/30 bg-sky-500/15 text-sky-100",
+        };
+    };
+
+    const formatRegistrationLine = (registration: AdminRegistration, index: number) => {
+        const name = registration.name || registration.user.name || "未命名志工";
+        const phone = registration.phone || registration.user.phone || "未留電話";
+        const note = registration.note ? `，備註：${registration.note}` : "";
+        return `${index + 1}. ${name}（${phone}，${statusLabels[registration.status]}${note}）`;
+    };
+
+    const buildEventExportText = (event: AdminEvent) => {
+        const roster = getEventRoster(event);
+        const dateText = event.endsAt
+            ? `${formatDateTime(event.startsAt)} - ${formatDateTime(event.endsAt)}`
+            : formatDateTime(event.startsAt);
+        const confirmedLines = roster.confirmed.length > 0
+            ? roster.confirmed.map(formatRegistrationLine).join("\n")
+            : "目前無正取報名者";
+        const waitlistedLines = roster.waitlisted.length > 0
+            ? `\n\n候補名單：\n${roster.waitlisted.map(formatRegistrationLine).join("\n")}`
+            : "";
+
+        return [
+            `活動：${event.title}`,
+            `時間：${dateText}`,
+            `地點：${event.location || "線上活動"}`,
+            event.capacity ? `人數：${roster.confirmedCount} / 預期 ${event.capacity} 人${roster.missingCount ? `，尚缺 ${roster.missingCount} 人` : "，已滿"}` : `人數：${roster.confirmedCount} 人`,
+            "",
+            "報名名單：",
+            confirmedLines,
+            waitlistedLines,
+            "",
+            "通知內容：",
+            "因天候或現場安排調整，本活動如需取消或改期，請以主辦方最新通知為準。謝謝大家配合。",
+        ].filter(Boolean).join("\n");
+    };
+
+    const copyEventExportText = async (event: AdminEvent) => {
+        await navigator.clipboard.writeText(buildEventExportText(event));
+        setCopiedEventId(event.id);
+        window.setTimeout(() => {
+            setCopiedEventId((current) => (current === event.id ? null : current));
+        }, 1800);
+    };
+
     const toDateTimeInputValue = (value: string | null) => {
         return formatTaipeiDateTimeInputValue(value);
     };
@@ -393,7 +513,7 @@ export default function VolunteerAdminClient() {
     return (
         <main className="min-h-screen tpp-page pt-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto space-y-6 pb-10">
-                <section className="grid md:grid-cols-4 gap-4">
+                <section className="grid md:grid-cols-6 gap-4">
                     <div className="glass-panel rounded-2xl p-5">
                         <div className="text-sm text-slate-400">活動數</div>
                         <div className="text-3xl font-black mt-2">{totals.events}</div>
@@ -409,6 +529,14 @@ export default function VolunteerAdminClient() {
                     <div className="glass-panel rounded-2xl p-5">
                         <div className="text-sm text-slate-400">已確認出席</div>
                         <div className="text-3xl font-black mt-2">{totals.attended}</div>
+                    </div>
+                    <div className="glass-panel rounded-2xl p-5 border-amber-300/25">
+                        <div className="text-sm text-amber-100/80">缺人活動</div>
+                        <div className="text-3xl font-black mt-2 text-amber-100">{totals.understaffed}</div>
+                    </div>
+                    <div className="glass-panel rounded-2xl p-5 border-emerald-300/25">
+                        <div className="text-sm text-emerald-100/80">已滿活動</div>
+                        <div className="text-3xl font-black mt-2 text-emerald-100">{totals.full}</div>
                     </div>
                 </section>
 
@@ -613,7 +741,11 @@ export default function VolunteerAdminClient() {
                             <div className="py-20 text-center text-slate-400">尚未建立活動。</div>
                         ) : (
                             <div className="space-y-4 max-h-[720px] overflow-y-auto pr-1">
-                                {events.map((event) => (
+                                {events.map((event) => {
+                                    const roster = getEventRoster(event);
+                                    const staffingStatus = getStaffingStatus(event);
+
+                                    return (
                                     <article key={event.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
                                         {getVolunteerEventCoverImage(event) && (
                                             <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
@@ -632,15 +764,13 @@ export default function VolunteerAdminClient() {
                                                 <p className="text-sm text-slate-400 mt-1">{formatDateTime(event.startsAt)}｜{event.location || "線上活動"}</p>
                                             </div>
                                             <div className="flex flex-col items-start sm:items-end gap-2">
-                                                <span className="text-xs text-slate-400">
-                                                    {event.registrations.filter((registration) => (
-                                                        registration.status === "REGISTERED" || registration.status === "ATTENDED"
-                                                    )).length}
-                                                    {event.capacity ? ` / 預期 ${event.capacity}` : ""} 人
-                                                    {event.registrations.some((registration) => registration.status === "WAITLISTED") && (
-                                                        <>，候補 {event.registrations.filter((registration) => registration.status === "WAITLISTED").length} 人</>
-                                                    )}
+                                                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${staffingStatus.className}`}>
+                                                    {staffingStatus.label}
                                                 </span>
+                                                <div className="text-xs leading-5 text-slate-400 sm:text-right">
+                                                    <div>{staffingStatus.detail}</div>
+                                                    {roster.waitlistedCount > 0 && <div>候補 {roster.waitlistedCount} 人</div>}
+                                                </div>
                                                 <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
                                                     <button
                                                         type="button"
@@ -670,6 +800,14 @@ export default function VolunteerAdminClient() {
                                                         {tokenUpdatingId === event.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <QrCode className="w-3.5 h-3.5" />}
                                                         報到 QR
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => copyEventExportText(event)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#61C5C7]/20 hover:bg-[#61C5C7]/30 px-3 py-1.5 text-xs font-semibold text-[#D9FFFF] transition"
+                                                    >
+                                                        <Copy className="w-3.5 h-3.5" />
+                                                        {copiedEventId === event.id ? "已複製" : "複製通知"}
+                                                    </button>
                                                     <Link
                                                         href={`/events/${event.slug || event.id}`}
                                                         className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold transition"
@@ -680,6 +818,15 @@ export default function VolunteerAdminClient() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <details className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                                            <summary className="cursor-pointer text-sm font-semibold text-slate-200">
+                                                匯出活動文字與報名名單
+                                            </summary>
+                                            <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-black/30 p-3 text-xs leading-5 text-slate-300">
+                                                {buildEventExportText(event)}
+                                            </pre>
+                                        </details>
 
                                         {editingEventId === event.id && (
                                             <form onSubmit={updateEvent} className="mt-4 space-y-4 rounded-xl border border-[#61C5C7]/20 bg-[#071820]/55 p-4">
@@ -854,7 +1001,7 @@ export default function VolunteerAdminClient() {
                                                     <div className="min-w-0 space-y-3">
                                                         <div>
                                                             <div className="font-semibold text-[#D9FFFF]">現場報到 QR Code</div>
-                                                            <p className="mt-1 text-sm text-[#D9FFFF]/75">志工掃描後登入 Google，並輸入報名電話完成報到。</p>
+                                                            <p className="mt-1 text-sm text-[#D9FFFF]/75">志工掃描後登入 Google，並輸入報名電話末三碼完成報到。</p>
                                                         </div>
                                                         <div className="break-all rounded-lg bg-black/20 px-3 py-2 text-xs text-slate-300">
                                                             {buildCheckInUrl(event)}
@@ -904,7 +1051,8 @@ export default function VolunteerAdminClient() {
                                             )}
                                         </div>
                                     </article>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </section>

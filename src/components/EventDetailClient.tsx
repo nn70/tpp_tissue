@@ -101,7 +101,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
         setMessage(null);
 
         if (!name.trim() || !phone.trim()) {
-            setMessage("請先填寫姓名與聯絡電話，方便活動前聯絡與現場報到確認。");
+            setMessage("請先填寫 Line 名稱或本名，以及聯絡電話，方便活動前聯絡與現場報到確認。");
             setSaving(false);
             return;
         }
@@ -332,13 +332,13 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                             <div>
                                 <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
                                     <User className="w-4 h-4 text-[#61C5C7]" />
-                                    姓名
+                                    Line 名稱或本名
                                 </label>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="請輸入姓名"
+                                    placeholder="請輸入 Line 名稱或本名"
                                     className="w-full glass-input rounded-xl px-4 py-3"
                                     required
                                 />
@@ -357,7 +357,7 @@ export default function EventDetailClient({ event, isLoggedIn, currentUserProfil
                                     required
                                 />
                                 <p className="mt-2 text-xs leading-5 text-slate-400">
-                                    第一次報名會保存姓名與電話，之後報名會自動帶出；現場 QR 報到時需輸入電話末三碼。
+                                    第一次報名會保存 Line 名稱或本名與電話，之後報名會自動帶出；現場 QR 報到時需輸入電話末三碼。
                                 </p>
                             </div>
                             <textarea

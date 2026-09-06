@@ -1,15 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Award, CalendarClock, CheckCircle2, ClipboardList, LockKeyhole, MapPinned, QrCode, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Award, CalendarClock, CheckCircle2, ClipboardList, Copy, LockKeyhole, MapPinned, QrCode, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { rewardMilestones } from "@/lib/volunteerRewards";
 import { VOLUNTEER_EVENT_CATEGORIES } from "@/lib/volunteerEventCategories";
 
 const features = [
-    { icon: Users, title: "Google 登入與活動報名", description: "志工登入 Google 帳號後即可報名活動，第一次報名需填寫姓名與電話，之後系統會自動帶出。" },
+    { icon: Users, title: "Google 登入與活動報名", description: "志工登入 Google 帳號後即可報名活動，第一次報名需填寫 Line 名稱或本名與電話，之後系統會自動帶出。" },
     { icon: ClipboardList, title: "活動建立與編輯", description: "管理員與小編可建立、編輯活動；管理員可刪除活動，並查看完整參與者資料。" },
-    { icon: QrCode, title: "QR Code 現場報到", description: "每個活動都有專屬報到 QR Code，志工現場輸入報名電話，驗證成功才列入出席次數。" },
+    { icon: QrCode, title: "QR Code 現場報到", description: "每個活動都有專屬報到 QR Code，志工現場輸入報名電話末三碼，驗證成功才列入出席次數。" },
     { icon: MapPinned, title: "物資發放紀錄", description: "管理員與小編可在地圖上記錄發放地點、對象、物資品項與後續聯絡提醒，一般志工不會看到。" },
-    { icon: CalendarClock, title: "Google Calendar 新增活動", description: "報名成功可開啟 Google Calendar 新增活動頁，由志工自行確認與儲存，不需要授權網站管理行事曆。" },
+    { icon: CalendarClock, title: "時間與地點快速開啟", description: "點活動時間可加入 Google Calendar，點活動地址可打開 Google Maps，不需要授權網站管理行事曆。" },
+    { icon: Copy, title: "後台缺人與通知匯出", description: "後台可依時間緊急程度標示缺人、急缺與已滿，並一鍵複製活動資訊與報名名單到 Line 通知。" },
     { icon: Award, title: "志工里程碑", description: "完成現場報到後累積出席次數，網站會顯示不同階段的志工參與紀錄與感謝項目。" },
 ];
 
@@ -45,7 +46,7 @@ export default function ReadmePage() {
                         </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        {VOLUNTEER_EVENT_CATEGORIES.slice(0, 4).map((category) => (
+                        {VOLUNTEER_EVENT_CATEGORIES.slice(0, 6).map((category) => (
                             <div key={category.label} className="overflow-hidden rounded-2xl border border-[#61C5C7]/25 bg-white shadow-sm">
                                 <div className="relative aspect-[4/3]">
                                     <Image src={category.imageUrl} alt={`${category.label}活動示意`} fill className="object-cover" sizes="(min-width: 1024px) 22vw, 45vw" />
@@ -93,6 +94,28 @@ export default function ReadmePage() {
                             <article key={role.name} className="rounded-2xl border border-[#61C5C7]/25 bg-white/88 p-5 shadow-sm">
                                 <h3 className="font-black text-[#173246]">{role.name}</h3>
                                 <p className="mt-2 text-sm leading-7 text-[#3b597d]">{role.description}</p>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <section className="px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl">
+                    <h2 className="text-2xl font-black text-[#173246]">後台活動管理</h2>
+                    <p className="mt-2 max-w-3xl leading-7 text-[#3b597d]">
+                        系統後台讓管理員與小編快速判斷哪些活動還缺人、哪些活動已滿，並能在臨時取消、改期或提醒時，把活動資訊與報名名單一鍵複製到 Line。
+                    </p>
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {[
+                            { title: "急缺", description: "24 小時內開始且仍缺人，以紅色標示。" },
+                            { title: "缺人", description: "3 天內開始且未達預期人數，以黃色標示。" },
+                            { title: "已滿", description: "正取與已出席人數已達預期人數，以綠色標示。" },
+                            { title: "一鍵複製", description: "匯出活動時間、地點、報名名單、電話與備註，方便貼到 Line。" },
+                        ].map((item) => (
+                            <article key={item.title} className="rounded-2xl border border-[#61C5C7]/25 bg-white/88 p-5 shadow-sm">
+                                <h3 className="font-black text-[#173246]">{item.title}</h3>
+                                <p className="mt-2 text-sm leading-7 text-[#3b597d]">{item.description}</p>
                             </article>
                         ))}
                     </div>
